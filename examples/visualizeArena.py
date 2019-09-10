@@ -34,6 +34,7 @@ def init_environment(env_path, docker_target_name, no_graphics, worker_id, seed)
 if len(sys.argv) > 1:
     arena_config_in = ArenaConfig(sys.argv[1])
 else:
+    Warning("Cannot find arena config fine, will use the configs/allObjectsRandom.yaml")
     arena_config_in = ArenaConfig('configs/allObjectsRandom.yaml')
 
 env = init_environment(env_path, docker_target_name, no_graphics, worker_id, run_seed)
