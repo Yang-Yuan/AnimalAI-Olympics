@@ -49,15 +49,20 @@ def run_step_imshow(step):
     res = env.step(np.random.randint(0, 3, size=2 * n_arenas))
     fig.suptitle('Step = ' + str(step))
     image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
+
+    # If all done, close the environment
+    if all(res['Learner'].local_done):
+        plt.close(fig)
+
     return image
 
+anim = None
+
 try:
-    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, frames=100, interval=50, repeat = False)
+    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, interval=50, repeat = False)
     plt.show()
-    anim.save("asdf.mp4", writer='ffmpeg')
-except KeyboardInterrupt:
-    env.close()
 finally:
     env.close()
+    anim.save("asdf.mp4", writer = "ffmpeg")
 
 
