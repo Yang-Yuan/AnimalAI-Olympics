@@ -4,6 +4,29 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
+import re
+import os
+
+##################################################
+# Specify the arena config here
+##################################################
+arenaConfig = '../examples/configs/1-Food.yaml'
+
+##################################################
+# Create a folder to store data of this task
+##################################################
+match = re.search('/([0-9A-Za-z\-]+?)\.yaml', arenaConfig)
+taskName = None
+if match:
+    taskName = match.group(1)
+    os.mkdir('./' + taskName)
+else:
+    raise NameError("Can't find task name, man.")
+
+##################################################
+# So many parameter, seriously?
+##################################################
+MAXIMUM_STEPS = 2000
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
@@ -18,6 +41,9 @@ no_graphics = False
 n_arenas = 1
 resolution = 84
 
+##################################################
+# Start up unity environment.
+##################################################
 if env_path is not None:
     env_path = (env_path.strip()
                 .replace('.app', '')
@@ -36,8 +62,13 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
-arena_config_in = ArenaConfig('../examples/configs/1-Food.yaml')
+arena_config_in = ArenaConfig(arenaConfig)
 info = env.reset(arenas_configurations=arena_config_in, train_mode=False)
+
+
+##################################################
+# Visualization
+##################################################
 fig, ax = plt.subplots()
 ax.axis("off")
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
@@ -45,24 +76,19 @@ image = ax.imshow(np.zeros((resolution, resolution, 3)))
 def initialize_animation():
     image.set_data(np.zeros((resolution, resolution, 3)))
 
+
 def run_step_imshow(step):
     res = env.step(np.random.randint(0, 3, size=2 * n_arenas))
     fig.suptitle('Step = ' + str(step))
     image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
 
-    # If all done, close the environment
     if all(res['Learner'].local_done):
-        plt.close(fig)
+        env.reset()
 
     return image
 
-anim = None
-
 try:
-    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, interval=50, repeat = False)
+    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, interval=50, repeat=False)
     plt.show()
 finally:
     env.close()
-    anim.save("asdf.mp4", writer = "ffmpeg")
-
-
