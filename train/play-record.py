@@ -37,7 +37,7 @@ env = UnityEnvironment(
 )
 
 arena_config_in = ArenaConfig('../examples/configs/1-Food.yaml')
-env.reset(arenas_configurations=arena_config_in)
+info = env.reset(arenas_configurations=arena_config_in, train_mode=False)
 fig, ax = plt.subplots()
 ax.axis("off")
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
@@ -51,10 +51,13 @@ def run_step_imshow(step):
     image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
     return image
 
-
-
 try:
-    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, frames=100, interval=50)
+    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, frames=100, interval=50, repeat = False)
     plt.show()
+    anim.save("asdf.mp4", writer='ffmpeg')
 except KeyboardInterrupt:
     env.close()
+finally:
+    env.close()
+
+
