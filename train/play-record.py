@@ -16,10 +16,10 @@ arenaConfig = '../examples/configs/1-Food.yaml'
 # Create a folder to store data of this task
 ##################################################
 match = re.search('/([0-9A-Za-z\-]+?)\.yaml', arenaConfig)
-taskName = None
 if match:
-    taskName = match.group(1)
-    os.mkdir('./' + taskName)
+    directoryName = './' + match.group(1)
+    if not os.path.exists(directoryName):
+        os.mkdir(directoryName)
 else:
     raise NameError("Can't find task name, man.")
 
@@ -63,7 +63,7 @@ env = UnityEnvironment(
 )
 
 arena_config_in = ArenaConfig(arenaConfig)
-info = env.reset(arenas_configurations=arena_config_in, train_mode=False)
+info = env.reset(arenas_configurations=arena_config_in)
 
 
 ##################################################
