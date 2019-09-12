@@ -1,5 +1,6 @@
 from animalai.envs.environment import UnityEnvironment
 from animalai.envs.arena_config import ArenaConfig
+import logging
 import random
 import numpy as np
 from matplotlib import pyplot as plt
@@ -9,6 +10,9 @@ import queue
 from pynput import keyboard
 import utils
 import os
+
+logging.basicConfig(level = logging.INFO)
+logger = logging.getLogger("play-record-logger")
 
 ##################################################
 # Specify the arena config here
@@ -78,7 +82,7 @@ queueLR = queue.Queue()
 
 def on_press(key):
     try:
-        print('alphanumeric key {0} pressed'.format(
+        logger.debug('alphanumeric key {0} pressed'.format(
             key.char))
         if utils.equalIgnoreCase(key.char, 'W'):
             utils.insertQ(queueFB, 1)
@@ -89,7 +93,7 @@ def on_press(key):
         elif utils.equalIgnoreCase(key.char, 'D'):
             utils.insertQ(queueLR, 1)
     except AttributeError:
-        print('special key {0} pressed'.format(
+        logger.debug('special key {0} pressed'.format(
             key))
 
 
@@ -100,7 +104,6 @@ listener.start()
 # Visualization
 ##################################################
 fig, ax = plt.subplots()
-ax.axis("off")
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 
@@ -114,12 +117,12 @@ def getAction():
     try:
         lr = queueLR.get_nowait()
     except Exception as e:
-        print(e)
+        logger.debug(e)
 
     try:
         fb = queueFB.get_nowait()
     except Exception as e:
-        print(e)
+        logger.debug(e)
 
     return np.array([fb, lr])
 
@@ -142,4 +145,4 @@ try:
     plt.show()
 finally:
     env.close()
-    keyboard.listener.start()
+    keyboard.listener.stop()
