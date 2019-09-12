@@ -10,6 +10,7 @@ import queue
 from pynput import keyboard
 import utils
 import os
+import time
 
 logging.basicConfig(level = logging.INFO)
 logger = logging.getLogger("play-record-logger")
@@ -114,20 +115,30 @@ def initialize_animation():
 def getAction():
     lr = 0
     fb = 0
-    try:
-        lr = queueLR.get_nowait()
-    except Exception as e:
-        logger.debug(e)
 
-    try:
-        fb = queueFB.get_nowait()
-    except Exception as e:
-        logger.debug(e)
+    # retry for 5 times
+    for _ in range(5):
+
+        try:
+            lr = queueLR.get_nowait()
+        except Exception as e:
+            logger.debug(e)
+
+        try:
+            fb = queueFB.get_nowait()
+        except Exception as e:
+            logger.debug(e)
+
+        if lr != 0 or fb != 0:
+            break
+        else:
+            time.sleep(0.005)
 
     return np.array([fb, lr])
 
 
 def run_step_imshow(step):
+
     action = getAction()
 
     res = env.step(action)
