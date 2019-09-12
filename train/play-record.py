@@ -5,10 +5,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import animation
 import re
-import os
 import queue
-import threading
-import readchar
+from pynput import keyboard
+import utils
+import os
 
 ##################################################
 # Specify the arena config here
@@ -45,9 +45,6 @@ no_graphics = False
 n_arenas = 1
 resolution = 84
 
-
-
-
 ##################################################
 # Start up unity environment.
 ##################################################
@@ -72,42 +69,32 @@ env = UnityEnvironment(
 arena_config_in = ArenaConfig(arenaConfig)
 info = env.reset(arenas_configurations=arena_config_in)
 
-
 ##################################################
-# Start a new thread for IO
+# Add a keyboard listener
 ##################################################
 queueFB = queue.Queue()
 queueLR = queue.Queue()
 
 
-def equalIgnoreCase(a, b):
-    return a.lower() == b.lower()
-
-
-def insertQ(q, x):
+def on_press(key):
     try:
-        q.put_nowait(x)
-    except Exception as e:
-        print(e)
+        print('alphanumeric key {0} pressed'.format(
+            key.char))
+        if utils.equalIgnoreCase(key.char, 'W'):
+            utils.insertQ(queueFB, 1)
+        elif utils.equalIgnoreCase(key.char, 'S'):
+            utils.insertQ(queueFB, 2)
+        elif utils.equalIgnoreCase(key.char, 'A'):
+            utils.insertQ(queueLR, 2)
+        elif utils.equalIgnoreCase(key.char, 'D'):
+            utils.insertQ(queueLR, 1)
+    except AttributeError:
+        print('special key {0} pressed'.format(
+            key))
 
 
-def inputReceiver():
-    while True:
-        char = readchar.readchar()
-        if equalIgnoreCase('A', char):
-            insertQ(queueLR, 1)
-        elif equalIgnoreCase('D', char):
-            insertQ(queueLR, 2)
-        elif equalIgnoreCase('W', char):
-            insertQ(queueFB, 1)
-        elif equalIgnoreCase('S', char):
-            insertQ(queueFB, 2)
-
-
-receiver = threading.Thread(target = inputReceiver)
-receiver.setDaemon(True)
-receiver.start()
-
+listener = keyboard.Listener(on_press=on_press)
+listener.start()
 
 ##################################################
 # Visualization
@@ -119,6 +106,7 @@ image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 def initialize_animation():
     image.set_data(np.zeros((resolution, resolution, 3)))
+
 
 def getAction():
     lr = 0
@@ -137,7 +125,6 @@ def getAction():
 
 
 def run_step_imshow(step):
-
     action = getAction()
 
     res = env.step(action)
@@ -155,3 +142,4 @@ try:
     plt.show()
 finally:
     env.close()
+    keyboard.listener.start()
