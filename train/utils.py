@@ -1,4 +1,4 @@
-
+import queue
 
 
 def equalIgnoreCase(a, b):
@@ -8,7 +8,7 @@ def equalIgnoreCase(a, b):
 def insertQ(q, x):
     try:
         q.put_nowait(x)
-    except Exception as e:
+    except queue.Full as e:
         print(e)
 
 

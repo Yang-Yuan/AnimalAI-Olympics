@@ -4,7 +4,6 @@ import logging
 import random
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import animation
 import re
 import queue
 from pynput import keyboard
@@ -77,8 +76,8 @@ info = env.reset(arenas_configurations=arena_config_in)
 ##################################################
 # Add a keyboard listener
 ##################################################
-queueFB = queue.Queue()
-queueLR = queue.Queue()
+queueFB = queue.Queue(maxsize = 5)
+queueLR = queue.Queue(maxsize = 5)
 
 
 def on_press(key):
@@ -93,9 +92,11 @@ def on_press(key):
             utils.insertQ(queueLR, 2)
         elif utils.equalIgnoreCase(key.char, 'D'):
             utils.insertQ(queueLR, 1)
-    except AttributeError:
-        logger.debug('special key {0} pressed'.format(
-            key))
+        elif utils.equalIgnoreCase(key.char, 'N'):
+            utils.insertQ(queueLR, 0)
+            utils.insertQ(queueFB, 0)
+    except Exception as e:
+        logger.debug(e)
 
 
 listener = keyboard.Listener(on_press=on_press)
@@ -104,20 +105,19 @@ listener.start()
 ##################################################
 # Visualization
 ##################################################
+plt.ion()
 fig, ax = plt.subplots()
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
-
-
-def initialize_animation():
-    image.set_data(np.zeros((resolution, resolution, 3)))
+fig.canvas.draw()
+fig.canvas.flush_events()
 
 
 def getAction():
-    lr = 0
-    fb = 0
+    lr = None
+    fb = None
 
-    # retry for 5 times
-    for _ in range(5):
+    # retry
+    while True:
 
         try:
             lr = queueLR.get_nowait()
@@ -129,11 +129,11 @@ def getAction():
         except Exception as e:
             logger.debug(e)
 
-        if lr != 0 or fb != 0:
+        if (lr is not None) or (fb is not None):
             break
-        else:
-            time.sleep(0.005)
 
+    lr = 0 if lr is None else lr
+    fb = 0 if fb is None else fb
     return np.array([fb, lr])
 
 
@@ -148,12 +148,18 @@ def run_step_imshow(step):
     if all(res['Learner'].local_done):
         env.reset()
 
-    return image
-
 
 try:
-    anim = animation.FuncAnimation(fig, run_step_imshow, init_func=initialize_animation, interval=50, repeat=False)
-    plt.show()
+
+    step = 0
+    while True:
+        run_step_imshow(step)
+        step += 1
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+
+except Exception as e:
+    logger.debug(e)
 finally:
     env.close()
-    keyboard.listener.stop()
+    listener.stop()
