@@ -221,7 +221,7 @@ visuals[step, :, :, :, :] = info['Learner'].visual_observations[0].astype(dtype=
 
 try:
     while True:
-        run_step(step)
+        run_step()
         step += 1
         fig.canvas.draw()
         fig.canvas.flush_events()
