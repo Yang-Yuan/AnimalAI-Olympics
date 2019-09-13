@@ -9,9 +9,9 @@ import queue
 from pynput import keyboard
 import utils
 import os
-import time
+import uuid
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("play-record-logger")
 
 ##################################################
@@ -34,7 +34,8 @@ else:
 ##################################################
 # So many parameter, seriously?
 ##################################################
-MAXIMUM_STEPS = 2000
+INITIAL_MEMORY_SIZE = 2000
+INCREMENT_MEMORY_SIZE = 250
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
@@ -48,6 +49,8 @@ docker_target_name = None
 no_graphics = False
 n_arenas = 1
 resolution = 84
+n_channels = 3
+dim_actions = 2
 
 ##################################################
 # Start up unity environment.
@@ -74,10 +77,17 @@ arena_config_in = ArenaConfig(arenaConfig)
 info = env.reset(arenas_configurations=arena_config_in)
 
 ##################################################
+# Initialize the numpy arrays for recording
+##################################################
+visuals = np.zeros(shape = (INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
+actions = np.zeros(shape = (INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype = np.uint8)
+visuals[0, :, :, :, :] = info['Learner'].visual_observations[0]
+
+##################################################
 # Add a keyboard listener
 ##################################################
-queueFB = queue.Queue(maxsize = 5)
-queueLR = queue.Queue(maxsize = 5)
+queueFB = queue.Queue(maxsize=5)
+queueLR = queue.Queue(maxsize=5)
 
 
 def on_press(key):
@@ -107,7 +117,7 @@ listener.start()
 ##################################################
 plt.ion()
 fig, ax = plt.subplots()
-image = ax.imshow(np.zeros((resolution, resolution, 3)))
+image = ax.imshow(info['Learner'].visual_observations[0][0, :, :, :])
 fig.canvas.draw()
 fig.canvas.flush_events()
 
@@ -137,27 +147,58 @@ def getAction():
     return np.array([fb, lr])
 
 
-def run_step_imshow(step):
+def record(step, visual, action):
+    global visuals
+    global actions
 
+    if visuals.shape[0] == step:
+        visuals = np.concatenate((visuals,
+                                  np.zeros((INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels),
+                                           dtype=np.uint8)),
+                                 axis=0)
+        actions = np.concatenate((actions, np.zeros((INCREMENT_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)),
+                                 axis=0)
+
+    visuals[step + 1, :, :, :, :] = visual.astype(dtype = np.uint8)
+    actions[step, :] = action.astype(dtype = np.uint8)
+
+
+def saveAndRestart(info):
+    global visuals
+    global actions
+    global step
+
+    visuals = visuals[range(step + 2), :, :, :, :]
+    actions = visuals[range(step + 1), :]
+
+    fileName = directoryName + "/" + uuid.uuid4()
+    np.savez(fileName, visuals, actions)
+
+    visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
+    actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
+    visuals[0, :, :, :, :] = info['Learner'].visual_observations[0]
+    step = 0
+
+def run_step(step):
     action = getAction()
 
     res = env.step(action)
     fig.suptitle('Step = ' + str(step))
     image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
 
+    record(step, res['Learner'].visual_observations[0], action)
+
     if all(res['Learner'].local_done):
-        env.reset()
+        brainInfo = env.reset()
+        saveAndRestart(brainInfo)
 
-
+step = 0
 try:
-
-    step = 0
     while True:
-        run_step_imshow(step)
+        run_step(step)
         step += 1
         fig.canvas.draw()
         fig.canvas.flush_events()
-
 except Exception as e:
     logger.debug(e)
 finally:
