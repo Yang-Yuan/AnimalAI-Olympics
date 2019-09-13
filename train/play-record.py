@@ -77,13 +77,6 @@ arena_config_in = ArenaConfig(arenaConfig)
 info = env.reset(arenas_configurations=arena_config_in)
 
 ##################################################
-# Initialize the numpy arrays for recording
-##################################################
-visuals = np.zeros(shape = (INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
-actions = np.zeros(shape = (INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype = np.uint8)
-visuals[0, :, :, :, :] = info['Learner'].visual_observations[0]
-
-##################################################
 # Add a keyboard listener
 ##################################################
 queueFB = queue.Queue(maxsize=5)
@@ -113,7 +106,7 @@ listener = keyboard.Listener(on_press=on_press)
 listener.start()
 
 ##################################################
-# Visualization
+# Simulation
 ##################################################
 plt.ion()
 fig, ax = plt.subplots()
@@ -125,6 +118,9 @@ fig.canvas.flush_events()
 def getAction():
     lr = None
     fb = None
+
+    global queueLR
+    global queueFB
 
     # retry
     while True:
@@ -147,9 +143,10 @@ def getAction():
     return np.array([fb, lr])
 
 
-def record(step, visual, action):
+def record(visual, action):
     global visuals
     global actions
+    global step
 
     if visuals.shape[0] == step:
         visuals = np.concatenate((visuals,
@@ -159,27 +156,30 @@ def record(step, visual, action):
         actions = np.concatenate((actions, np.zeros((INCREMENT_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)),
                                  axis=0)
 
-    visuals[step + 1, :, :, :, :] = visual.astype(dtype = np.uint8)
-    actions[step, :] = action.astype(dtype = np.uint8)
+    visuals[step + 1, :, :, :, :] = visual.astype(dtype=np.uint8)
+    actions[step, :] = action.astype(dtype=np.uint8)
 
 
-def saveAndRestart(info):
+def saveAndRestart(brainInfo):
     global visuals
     global actions
     global step
     global queueLR
     global queueFB
+    global image
 
     visuals = visuals[range(step + 2), :, :, :, :]
     actions = visuals[range(step + 1), :]
 
-    fileName = directoryName + "/" + uuid.uuid4()
+    fileName = directoryName + "/" + str(uuid.uuid4())
     np.savez(fileName, visuals, actions)
 
     visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
-    visuals[0, :, :, :, :] = info['Learner'].visual_observations[0]
+    visuals[0, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
     step = 0
+
+    image.set_data(brainInfo['Learner'].visual_observations[0][0, :, :, :])
 
     while not queueLR.empty():
         try:
@@ -194,20 +194,31 @@ def saveAndRestart(info):
             logger.info("reset queueFB")
 
 
-def run_step(step):
+def run_step():
+    global step
+    global image
+
     action = getAction()
 
     res = env.step(action)
     fig.suptitle('Step = ' + str(step))
     image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
 
-    record(step, res['Learner'].visual_observations[0], action)
+    record(res['Learner'].visual_observations[0], action)
 
     if all(res['Learner'].local_done):
         brainInfo = env.reset()
         saveAndRestart(brainInfo)
 
+
+##################################################
+# Play and record
+##################################################
 step = 0
+visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
+actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
+visuals[step, :, :, :, :] = info['Learner'].visual_observations[0].astype(dtype=np.uint8)
+
 try:
     while True:
         run_step(step)
