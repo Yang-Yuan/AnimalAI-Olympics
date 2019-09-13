@@ -74,7 +74,7 @@ env = UnityEnvironment(
 )
 
 arena_config_in = ArenaConfig(arenaConfig)
-info = env.reset(arenas_configurations=arena_config_in)
+brainInfo = env.reset(arenas_configurations=arena_config_in)
 
 ##################################################
 # Add a keyboard listener
@@ -105,16 +105,10 @@ def on_press(key):
 listener = keyboard.Listener(on_press=on_press)
 listener.start()
 
-##################################################
-# Simulation
-##################################################
-plt.ion()
-fig, ax = plt.subplots()
-image = ax.imshow(info['Learner'].visual_observations[0][0, :, :, :])
-fig.canvas.draw()
-fig.canvas.flush_events()
 
-
+##################################################
+# Simulation Utilities
+##################################################
 def getAction():
     lr = None
     fb = None
@@ -160,13 +154,13 @@ def record(visual, action):
     actions[step, :] = action.astype(dtype=np.uint8)
 
 
-def saveAndRestart(brainInfo):
+def saveAndRestart():
     global visuals
     global actions
     global step
     global queueLR
     global queueFB
-    global image
+    global brainInfo
 
     visuals = visuals[range(step + 2), :, :, :, :]
     actions = visuals[range(step + 1), :]
@@ -178,8 +172,6 @@ def saveAndRestart(brainInfo):
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
     visuals[0, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
     step = 0
-
-    image.set_data(brainInfo['Learner'].visual_observations[0][0, :, :, :])
 
     while not queueLR.empty():
         try:
@@ -196,19 +188,17 @@ def saveAndRestart(brainInfo):
 
 def run_step():
     global step
-    global image
+    global brainInfo
 
     action = getAction()
 
-    res = env.step(action)
-    fig.suptitle('Step = ' + str(step))
-    image.set_data(res['Learner'].visual_observations[0][0, :, :, :])
+    brainInfo = env.step(action)
 
-    record(res['Learner'].visual_observations[0], action)
+    record(brainInfo['Learner'].visual_observations[0], action)
 
-    if all(res['Learner'].local_done):
+    if all(brainInfo['Learner'].local_done):
         brainInfo = env.reset()
-        saveAndRestart(brainInfo)
+        saveAndRestart()
 
 
 ##################################################
@@ -217,14 +207,22 @@ def run_step():
 step = 0
 visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
 actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
-visuals[step, :, :, :, :] = info['Learner'].visual_observations[0].astype(dtype=np.uint8)
+visuals[step, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
+
+plt.ion()
+fig, ax = plt.subplots()
+image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 try:
     while True:
-        run_step()
-        step += 1
+        image.set_data(brainInfo['Learner'].visual_observations[0][0, :, :, :])
+        fig.suptitle('Step = ' + str(step))
         fig.canvas.draw()
         fig.canvas.flush_events()
+
+        run_step()
+        step += 1
+
 except Exception as e:
     logger.debug(e)
 finally:
