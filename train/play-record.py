@@ -167,6 +167,8 @@ def saveAndRestart(info):
     global visuals
     global actions
     global step
+    global queueLR
+    global queueFB
 
     visuals = visuals[range(step + 2), :, :, :, :]
     actions = visuals[range(step + 1), :]
@@ -178,6 +180,19 @@ def saveAndRestart(info):
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
     visuals[0, :, :, :, :] = info['Learner'].visual_observations[0]
     step = 0
+
+    while not queueLR.empty():
+        try:
+            queueLR.get_nowait()
+        except queue.Empty:
+            logger.info("reseted queueLR")
+
+    while not queueFB.empty():
+        try:
+            queueFB.get_nowait()
+        except queue.Empty:
+            logger.info("reset queueFB")
+
 
 def run_step(step):
     action = getAction()
