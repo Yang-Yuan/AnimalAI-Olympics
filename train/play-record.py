@@ -74,16 +74,15 @@ env = UnityEnvironment(
 )
 
 arena_config_in = ArenaConfig(arenaConfig)
-brainInfo = env.reset(arenas_configurations=arena_config_in)
+
 
 ##################################################
 # Add a keyboard listener
 ##################################################
-queueFB = queue.Queue(maxsize=5)
-queueLR = queue.Queue(maxsize=5)
-
-
 def on_press(key):
+    global queueLR
+    global queueFB
+
     try:
         logger.debug('alphanumeric key {0} pressed'.format(
             key.char))
@@ -202,17 +201,24 @@ def run_step():
 
 
 ##################################################
-# Play and record
+# Global variables to maintain in simulation
 ##################################################
 step = 0
+queueFB = queue.Queue(maxsize=5)
+queueLR = queue.Queue(maxsize=5)
 visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
 actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
+brainInfo = env.reset(arenas_configurations=arena_config_in)
 visuals[step, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
 
 plt.ion()
 fig, ax = plt.subplots()
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
+
+##################################################
+# Play and record
+##################################################
 try:
     while True:
         image.set_data(brainInfo['Learner'].visual_observations[0][0, :, :, :])
