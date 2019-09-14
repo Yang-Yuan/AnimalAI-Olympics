@@ -150,7 +150,7 @@ def record(visual, action):
         actions = np.concatenate((actions, np.zeros((INCREMENT_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)),
                                  axis=0)
 
-    visuals[step + 1, :, :, :, :] = visual.astype(dtype=np.uint8)
+    visuals[step + 1, :, :, :, :] = (visual * 255).astype(dtype=np.uint8)
     actions[step, :] = action.astype(dtype=np.uint8)
 
 
@@ -210,7 +210,7 @@ queueLR = queue.Queue(maxsize=5)
 visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
 actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
 brainInfo = env.reset(arenas_configurations=arena_config_in)
-visuals[step, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
+visuals[step, :, :, :, :] = (brainInfo['Learner'].visual_observations[0] * 255).astype(dtype=np.uint8)
 
 plt.ion()
 fig, ax = plt.subplots()
