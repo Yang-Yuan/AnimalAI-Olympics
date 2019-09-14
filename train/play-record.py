@@ -154,13 +154,11 @@ def record(visual, action):
     actions[step, :] = action.astype(dtype=np.uint8)
 
 
-def saveAndRestart():
+def save():
     global visuals
     global actions
     global step
-    global queueLR
-    global queueFB
-    global brainInfo
+    global directoryName
 
     visuals = visuals[range(step + 2), :, :, :, :]
     actions = actions[range(step + 1), :]
@@ -168,10 +166,19 @@ def saveAndRestart():
     fileName = directoryName + "/" + str(uuid.uuid4())
     np.savez(fileName, visuals = visuals, actions = actions)
 
+
+
+def restart():
+    global visuals
+    global actions
+    global step
+    global queueLR
+    global queueFB
+    global brainInfo
+
     visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
-    visuals[0, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
-    step = 0
+    visuals[step, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
 
     while not queueLR.empty():
         try:
@@ -197,8 +204,12 @@ def run_step():
     record(brainInfo['Learner'].visual_observations[0], action)
 
     if all(brainInfo['Learner'].local_done):
+        save()
+        step = 0
         brainInfo = env.reset()
-        saveAndRestart()
+        restart()
+    else:
+        step += 1
 
 
 ##################################################
@@ -226,10 +237,7 @@ try:
         fig.suptitle('Step = ' + str(step))
         fig.canvas.draw()
         fig.canvas.flush_events()
-
         run_step()
-        step += 1
-
 except Exception as e:
     logger.debug(e)
 finally:
