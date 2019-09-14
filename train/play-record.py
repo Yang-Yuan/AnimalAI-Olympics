@@ -163,7 +163,7 @@ def saveAndRestart():
     global brainInfo
 
     visuals = visuals[range(step + 2), :, :, :, :]
-    actions = visuals[range(step + 1), :]
+    actions = actions[range(step + 1), :]
 
     fileName = directoryName + "/" + str(uuid.uuid4())
     np.savez(fileName, visuals = visuals, actions = actions)
