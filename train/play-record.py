@@ -10,6 +10,7 @@ from pynput import keyboard
 import utils
 import os
 import uuid
+import constants
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("play-record-logger")
@@ -48,9 +49,9 @@ run_seed = 1
 docker_target_name = None
 no_graphics = False
 n_arenas = 1
-resolution = 84
-n_channels = 3
-dim_actions = 2
+resolution = constants.resolution
+n_channels = constants.n_channels
+dim_actions = constants.dim_actions
 
 ##################################################
 # Start up unity environment.
@@ -165,7 +166,7 @@ def saveAndRestart():
     actions = visuals[range(step + 1), :]
 
     fileName = directoryName + "/" + str(uuid.uuid4())
-    np.savez(fileName, visuals, actions)
+    np.savez(fileName, visuals = visuals, actions = actions)
 
     visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
