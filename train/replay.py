@@ -28,25 +28,23 @@ def getXY(action):
         y += (action[0] - 1.5) * constants.resolution / 2
 
     if 0 != action[1]:
-        x += (action[1] - 1.5) * constants.resolution / 2
+        x += (1.5 - action[1]) * constants.resolution / 2
+
+    return x, y
 
 
 for step in range(length):
     image.set_data(visuals[step, 0, :, :, :])
     fig.suptitle('Step = ' + str(step))
-    ax.annotate(str(actions[step, :]),
+    ann = ax.annotate(str(actions[step, :]),
                 xy = getXY(actions[step, :]),
                 xytext = (constants.resolution / 2, constants.resolution / 2),
-                arrowprops=dict(facecolor='black', shrink=0.05))
+                arrowprops=dict(facecolor='lime', shrink=0.05))
     #TODO add an arrow to indicate the action
     fig.canvas.draw()
     fig.canvas.flush_events()
+    ann.remove()
     time.sleep(0.2)
 
 
-# last frame
-image.set_data(visuals[length, 0, :, :, :])
-fig.suptitle('Step = ' + str(length))
-fig.canvas.draw()
-fig.canvas.flush_events()
-
+print("asdfasdf")

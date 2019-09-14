@@ -160,12 +160,11 @@ def save():
     global step
     global directoryName
 
-    visuals = visuals[range(step + 2), :, :, :, :]
+    visuals = visuals[range(step + 1), :, :, :, :]
     actions = actions[range(step + 1), :]
 
     fileName = directoryName + "/" + str(uuid.uuid4())
     np.savez(fileName, visuals = visuals, actions = actions)
-
 
 
 def restart():
@@ -176,9 +175,10 @@ def restart():
     global queueFB
     global brainInfo
 
+    step = 0
     visuals = np.zeros(shape=(INITIAL_MEMORY_SIZE, n_arenas, resolution, resolution, n_channels), dtype=np.uint8)
     actions = np.zeros(shape=(INITIAL_MEMORY_SIZE, dim_actions * n_arenas), dtype=np.uint8)
-    visuals[step, :, :, :, :] = brainInfo['Learner'].visual_observations[0].astype(dtype=np.uint8)
+    visuals[step, :, :, :, :] = (brainInfo['Learner'].visual_observations[0] * 255).astype(dtype=np.uint8)
 
     while not queueLR.empty():
         try:
@@ -205,7 +205,6 @@ def run_step():
 
     if all(brainInfo['Learner'].local_done):
         save()
-        step = 0
         brainInfo = env.reset()
         restart()
     else:
