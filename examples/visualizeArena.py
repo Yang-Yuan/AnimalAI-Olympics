@@ -26,7 +26,8 @@ def init_environment(env_path, docker_target_name, no_graphics, worker_id, seed)
         worker_id=worker_id,
         seed=seed,
         docker_training=docker_training,
-        play=True
+        play=False,
+        inference=True
     )
 
 
