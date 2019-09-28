@@ -1,3 +1,5 @@
+import random
+
 class Agent(object):
 
     def __init__(self):
@@ -13,7 +15,10 @@ class Agent(object):
         Leave blank if nothing needs to happen there
         :param t the number of timesteps in the episode
         """
-        print("reset is called")
+        self.t = t
+        self.step_n = 0
+        self.total_reward = 0
+
 
     def step(self, obs, reward, done, info):
         """
@@ -30,15 +35,8 @@ class Agent(object):
         :param info: contains auxiliary diagnostic information, including BrainInfo.
         :return: the action to take, a list or size 2
         """
+        self.total_reward += reward
+        print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        self.step_n += 1
 
-        print(obs)
-        print(reward)
-        print(done)
-        print(info)
-
-        action = [0, 0]
-
-        if done:
-            return action
-
-        return action
+        return [random.randint(0, 2), random.randint(0, 2)]
