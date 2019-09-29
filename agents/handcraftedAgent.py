@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import random
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
@@ -11,12 +11,17 @@ class Agent(object):
     color_diff_limit = 0.1
     position_diff_limit = 1
 
+
     def __init__(self):
         """
          Load your agent here and initialize anything needed
          WARNING: any path to files you wish to access on the docker should be ABSOLUTE PATHS
         """
-        pass
+        self.t = 0
+        self.step_n = 0
+        self.total_reward = 0
+        self.pirouette_step_n = 0
+
 
     def reset(self, t=250):
         """
@@ -27,6 +32,7 @@ class Agent(object):
         self.t = t
         self.step_n = 0
         self.total_reward = 0
+        self.pirouette_step_n = 0
 
 
     def step(self, obs, reward, done, info):
@@ -44,23 +50,26 @@ class Agent(object):
         :param info: contains auxiliary diagnostic information, including BrainInfo.
         :return: the action to take, a list or size 2
         """
+        if done:
+            return [0, 0]
+
+        if self.pirouette_step_n > 60:
+            self.pirouette_step_n = 0
+            return [random.randint(1, 2), random.randint(1, 2)]
+
         self.total_reward += reward
-        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
         self.step_n += 1
 
         is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
         if is_green.any():
+            self.pirouette_step_n = 0
             ind_green = np.where(is_green)
         else:
+            self.pirouette_step_n += 1
             return [0, 1]
 
         X = np.array(ind_green).transpose()
-        # clusters_x = np.arange(len(X)).reshape(-1, 1)
-        # dist_x = np.zeros((len(x), len(x)))
-        # for ii in range(len(x)):
-        #     for jj in range(ii + 1, len(x)):
-        #         dist_x[ii, jj] = dist_x[jj, ii] = sum(abs(x[ii] - x[jj]))
-        # dist_x[np.where(dist_x > Agent.position_diff_limit)] = float('inf')
 
         dist_x = pdist(X, 'cityblock')
         link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
@@ -71,21 +80,11 @@ class Agent(object):
         largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
         center_of_the_largest = largest_cluster.mean(axis = 0)
 
+        diff_center = center_of_the_largest - [41.5, 41.5]
 
-
-        # diff_green = abs((obs - Agent.green).sum(axis=2))
-        # ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
-        # diff_min = diff_green[ind_min]
-        #
-        # green_clusters = None
-        # if diff_min > Agent.color_diff_limit:
-        #     return [0, 1]
-        # else:
-        #     green_points = np.array(ind_min).reshape(1, 2)
-        #     while True:
-        #         diff_green[ind_min] = float("inf")
-        #         ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
-        #         diff_min = diff_green[ind_min]
-        #         dist_min = abs(green_points - np.array(ind_min)).sum(axis = 1).min()
-        #         if diff_min < Agent.color_diff_limit and
-        return [0, 0]
+        if diff_center < -1:
+            return [0, 2]
+        elif diff_center > 1:
+            return [0, 1]
+        else:
+            return [1, 0]
