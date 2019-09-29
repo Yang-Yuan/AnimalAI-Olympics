@@ -15,13 +15,15 @@ import time
 
 from handcraftedAgent import Agent
 
-arenaConfigs = ['../examples/configs/1-Food.yaml',
-                '../examples/configs/2-Preferences.yaml',
-                '../examples/configs/3-Obstacles.yaml',
-                '../examples/configs/4-Avoidance.yaml',
-                '../examples/configs/5-SpatialReasoning.yaml',
-                '../examples/configs/6-Generalization.yaml',
-                '../examples/configs/7-InternalMemory.yaml']
+# arenaConfigs = ['../examples/configs/1-Food.yaml',
+#                 '../examples/configs/2-Preferences.yaml',
+#                 '../examples/configs/3-Obstacles.yaml',
+#                 '../examples/configs/4-Avoidance.yaml',
+#                 '../examples/configs/5-SpatialReasoning.yaml',
+#                 '../examples/configs/6-Generalization.yaml',
+#                 '../examples/configs/7-InternalMemory.yaml']
+
+arenaConfigs = ['../configs/1-Food/single-static.yaml']
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
