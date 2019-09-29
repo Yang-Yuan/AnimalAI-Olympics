@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class Agent(object):
 
@@ -43,18 +43,34 @@ class Agent(object):
         # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
         self.step_n += 1
 
-        diff_green = abs((obs - Agent.green).sum(axis=2))
-        ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
-        diff_min = diff_green[ind_min]
-
-        green_clusters = None
-        if diff_min > Agent.color_diff_limit:
-            return [0, 1]
+        is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
+        if is_green.any():
+            ind_green = np.where(is_green)
         else:
-            green_points = np.array(ind_min).reshape(1, 2)
-            while True:
-                diff_green[ind_min] = float("inf")
-                ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
-                diff_min = diff_green[ind_min]
-                dist_min = abs(green_points - np.array(ind_min)).sum(axis = 1).min()
-                if diff_min < Agent.color_diff_limit and
+            return [0, 1]
+
+        x = np.array(ind_green).transpose()
+        ind_x = np.arange(len(x)).reshape(-1, 1)
+        dist_x = np.zeros( (len(x), len(x)) )
+        for ii in range(len(x)):
+            for jj in range(len(x)):
+                dist_x[ii, jj] = sum(abs(x[ii] - x[jj]))
+
+
+
+        # diff_green = abs((obs - Agent.green).sum(axis=2))
+        # ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
+        # diff_min = diff_green[ind_min]
+        #
+        # green_clusters = None
+        # if diff_min > Agent.color_diff_limit:
+        #     return [0, 1]
+        # else:
+        #     green_points = np.array(ind_min).reshape(1, 2)
+        #     while True:
+        #         diff_green[ind_min] = float("inf")
+        #         ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
+        #         diff_min = diff_green[ind_min]
+        #         dist_min = abs(green_points - np.array(ind_min)).sum(axis = 1).min()
+        #         if diff_min < Agent.color_diff_limit and
+        return [0, 0]

@@ -69,16 +69,18 @@ for arenaConfig in arenaConfigs:
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
         while True:
+
             obs = brainInfo['Learner'].visual_observations[0][0, :, :, :]
             reward = brainInfo['Learner'].rewards[0]
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
-            action = agent.step(obs, reward, done, info)
 
             image.set_data(obs)
             fig.canvas.draw()
             fig.canvas.flush_events()
             time.sleep(1)
+
+            action = agent.step(obs, reward, done, info)
 
             if all(brainInfo['Learner'].local_done):
                 break
