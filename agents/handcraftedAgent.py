@@ -51,5 +51,10 @@ class Agent(object):
         if diff_min > Agent.color_diff_limit:
             return [0, 1]
         else:
-            green_clusters = [[ind_min]]
-
+            green_points = np.array(ind_min).reshape(1, 2)
+            while True:
+                diff_green[ind_min] = float("inf")
+                ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
+                diff_min = diff_green[ind_min]
+                dist_min = abs(green_points - np.array(ind_min)).sum(axis = 1).min()
+                if diff_min < Agent.color_diff_limit and
