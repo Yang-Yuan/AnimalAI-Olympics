@@ -11,6 +11,7 @@ import utils
 import os
 import uuid
 import constants
+import time
 
 from handcraftedAgent import Agent
 
@@ -55,6 +56,10 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
+plt.ion()
+fig, ax = plt.subplots()
+image = ax.imshow(np.zeros((resolution, resolution, 3)))
+
 agent = Agent()
 
 for arenaConfig in arenaConfigs:
@@ -69,6 +74,11 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
             action = agent.step(obs, reward, done, info)
+
+            image.set_data(obs)
+            fig.canvas.draw()
+            fig.canvas.flush_events()
+            time.sleep(1)
 
             if all(brainInfo['Learner'].local_done):
                 break

@@ -1,6 +1,10 @@
-import random
+import numpy as np
+
 
 class Agent(object):
+
+    green = [0.506, 0.749, 0.255]
+    color_diff_limit = 0.1
 
     def __init__(self):
         """
@@ -36,7 +40,16 @@ class Agent(object):
         :return: the action to take, a list or size 2
         """
         self.total_reward += reward
-        print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
         self.step_n += 1
 
-        return [random.randint(0, 2), random.randint(0, 2)]
+        diff_green = abs((obs - Agent.green).sum(axis=2))
+        ind_min = np.unravel_index(diff_green.argmin(axis=None), diff_green.shape)
+        diff_min = diff_green[ind_min]
+
+        green_clusters = None
+        if diff_min > Agent.color_diff_limit:
+            return [0, 1]
+        else:
+            green_clusters = [[ind_min]]
+
