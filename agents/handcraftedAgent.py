@@ -10,7 +10,8 @@ class Agent(object):
     green = [0.506, 0.749, 0.255]
     color_diff_limit = 0.1
     position_diff_limit = 1
-
+    center_of_view = [41.5, 41.5]
+    aim_error_limit = 1
 
     def __init__(self):
         """
@@ -22,7 +23,6 @@ class Agent(object):
         self.total_reward = 0
         self.pirouette_step_n = 0
 
-
     def reset(self, t=250):
         """
         Reset is called before each episode begins
@@ -33,7 +33,6 @@ class Agent(object):
         self.step_n = 0
         self.total_reward = 0
         self.pirouette_step_n = 0
-
 
     def step(self, obs, reward, done, info):
         """
@@ -71,20 +70,22 @@ class Agent(object):
 
         X = np.array(ind_green).transpose()
 
-        dist_x = pdist(X, 'cityblock')
-        link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
-        cluster_label_x = fcluster(link_x, Agent.position_diff_limit, 'distance')
-        cluster_labels = np.unique(cluster_label_x)
-        cluster_sizes = [(cluster_label_x == cluster_label).sum() for cluster_label in cluster_labels]
-        largest_cluster_label = cluster_labels[np.argmax(cluster_sizes)]
-        largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
-        center_of_the_largest = largest_cluster.mean(axis = 0)
+        if 1 == len(X):
+            diff_center = X[0] - Agent.center_of_view
+        else:
+            dist_x = pdist(X, 'cityblock')
+            link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
+            cluster_label_x = fcluster(link_x, Agent.position_diff_limit, 'distance')
+            cluster_labels = np.unique(cluster_label_x)
+            cluster_sizes = [(cluster_label_x == cluster_label).sum() for cluster_label in cluster_labels]
+            largest_cluster_label = cluster_labels[np.argmax(cluster_sizes)]
+            largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
+            center_of_the_largest = largest_cluster.mean(axis=0)
+            diff_center = center_of_the_largest - Agent.center_of_view
 
-        diff_center = center_of_the_largest - [41.5, 41.5]
-
-        if diff_center < -1:
+        if diff_center[1] < -Agent.aim_error_limit:
             return [0, 2]
-        elif diff_center > 1:
+        elif diff_center[1] > Agent.aim_error_limit:
             return [0, 1]
         else:
             return [1, 0]
