@@ -11,7 +11,7 @@ class Agent(object):
     color_diff_limit = 0.1
     position_diff_limit = 1
     center_of_view = [41.5, 41.5]
-    aim_error_limit = 1
+    aim_error_limit = 5
 
     def __init__(self):
         """
