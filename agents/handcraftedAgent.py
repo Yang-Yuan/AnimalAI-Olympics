@@ -8,7 +8,7 @@ from scipy.cluster.hierarchy import fcluster
 class Agent(object):
 
     green = [0.506, 0.749, 0.255]
-    color_diff_limit = 0.1
+    color_diff_limit = 0.3
     position_diff_limit = 1
     center_of_view = [41.5, 41.5]
     aim_error_limit = 5
