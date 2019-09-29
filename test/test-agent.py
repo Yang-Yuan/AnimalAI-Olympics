@@ -78,7 +78,6 @@ for arenaConfig in arenaConfigs:
             image.set_data(obs)
             fig.canvas.draw()
             fig.canvas.flush_events()
-            time.sleep(1)
 
             action = agent.step(obs, reward, done, info)
 
@@ -88,3 +87,4 @@ for arenaConfig in arenaConfigs:
                 brainInfo = env.step(action)
 
 env.close()
+

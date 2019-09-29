@@ -1,10 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import fcluster
+
 
 class Agent(object):
 
     green = [0.506, 0.749, 0.255]
     color_diff_limit = 0.1
+    position_diff_limit = 1
 
     def __init__(self):
         """
@@ -49,12 +54,22 @@ class Agent(object):
         else:
             return [0, 1]
 
-        x = np.array(ind_green).transpose()
-        ind_x = np.arange(len(x)).reshape(-1, 1)
-        dist_x = np.zeros( (len(x), len(x)) )
-        for ii in range(len(x)):
-            for jj in range(len(x)):
-                dist_x[ii, jj] = sum(abs(x[ii] - x[jj]))
+        X = np.array(ind_green).transpose()
+        # clusters_x = np.arange(len(X)).reshape(-1, 1)
+        # dist_x = np.zeros((len(x), len(x)))
+        # for ii in range(len(x)):
+        #     for jj in range(ii + 1, len(x)):
+        #         dist_x[ii, jj] = dist_x[jj, ii] = sum(abs(x[ii] - x[jj]))
+        # dist_x[np.where(dist_x > Agent.position_diff_limit)] = float('inf')
+
+        dist_x = pdist(X, 'cityblock')
+        link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
+        cluster_label_x = fcluster(link_x, Agent.position_diff_limit, 'distance')
+        cluster_labels = np.unique(cluster_label_x)
+        cluster_sizes = [(cluster_label_x == cluster_label).sum() for cluster_label in cluster_labels]
+        largest_cluster_label = cluster_labels[np.argmax(cluster_sizes)]
+        largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
+        center_of_the_largest = largest_cluster.mean(axis = 0)
 
 
 
