@@ -66,12 +66,12 @@ agent = Agent()
 
 for arenaConfig in arenaConfigs:
     arena_config_in = ArenaConfig(arenaConfig)
-    for _ in range(constants.sample_size_per_task):
+    for sample_n in range(constants.sample_size_per_task):
+        print("Sample: {}".format(sample_n))
         agent.reset(arena_config_in.arenas[0].t)
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
         while True:
-
             obs = brainInfo['Learner'].visual_observations[0][0, :, :, :]
             reward = brainInfo['Learner'].rewards[0]
             done = brainInfo['Learner'].local_done[0]

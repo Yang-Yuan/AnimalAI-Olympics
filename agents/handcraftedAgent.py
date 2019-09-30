@@ -1,6 +1,7 @@
 import numpy as np
 import random
-from scipy.spatial.distance import pdist
+import sys
+from scipy.spatial.distance import pdist, cosine
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
 
@@ -8,10 +9,11 @@ from scipy.cluster.hierarchy import fcluster
 class Agent(object):
 
     green = [0.506, 0.749, 0.255]
-    color_diff_limit = 0.3
+    color_diff_limit = 0.01
     position_diff_limit = 1
     center_of_view = [41.5, 41.5]
     aim_error_limit = 5
+    hl = 2
 
     def __init__(self):
         """
@@ -52,15 +54,28 @@ class Agent(object):
         if done:
             return [0, 0]
 
+        if 250 == self.step_n:
+            print("Failed")
+            sys.exit(1)
+
         if self.pirouette_step_n > 60:
             self.pirouette_step_n = 0
             return [random.randint(1, 2), random.randint(1, 2)]
 
         self.total_reward += reward
-        print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
         self.step_n += 1
 
-        is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
+        # is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
+        is_green = np.zeros(obs.shape[0 : 2], dtype = bool)
+        diff = np.zeros(obs.shape[0 : 2])
+        for ii in range(obs.shape[0]):
+            for jj in range(obs.shape[1]):
+                diff[ii, jj] = cosine(obs[ii, jj], Agent.green)
+                is_green[ii, jj] = diff[ii, jj] < Agent.color_diff_limit
+
+        print(diff.min())
+
         if is_green.any():
             self.pirouette_step_n = 0
             ind_green = np.where(is_green)
@@ -72,6 +87,7 @@ class Agent(object):
 
         if 1 == len(X):
             diff_center = X[0] - Agent.center_of_view
+            target_size = 1
         else:
             dist_x = pdist(X, 'cityblock')
             link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
@@ -82,10 +98,11 @@ class Agent(object):
             largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
             center_of_the_largest = largest_cluster.mean(axis=0)
             diff_center = center_of_the_largest - Agent.center_of_view
+            target_size = len(largest_cluster)
 
-        if diff_center[1] < -Agent.aim_error_limit:
+        if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             return [0, 2]
-        elif diff_center[1] > Agent.aim_error_limit:
+        elif diff_center[1] > Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             return [0, 1]
         else:
             return [1, 0]
