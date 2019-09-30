@@ -10,8 +10,11 @@ class Agent(object):
 
     green = [0.506, 0.749, 0.255]
     green_h = 1.4919028340080973
-    color_diff_limit = 0.3
+
+    color_diff_limit = 0.45
     position_diff_limit = 1
+    size_limit = 5
+
     center_of_view = [41.5, 41.5]
     aim_error_limit = 5
     hl = 2
@@ -101,9 +104,15 @@ class Agent(object):
             target_size = len(largest_cluster)
 
         if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
-            return [0, 2]
+            if target_size < Agent.size_limit:
+                return [1, 2]
+            else:
+                return [0, 2]
         elif diff_center[1] > Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
-            return [0, 1]
+            if target_size < Agent.size_limit:
+                return [1, 1]
+            else:
+                return [0, 1]
         else:
             return [1, 0]
 
