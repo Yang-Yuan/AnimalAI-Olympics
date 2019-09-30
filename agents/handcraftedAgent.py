@@ -68,13 +68,9 @@ class Agent(object):
 
         # is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
         is_green = np.zeros(obs.shape[0 : 2], dtype = bool)
-        diff = np.zeros(obs.shape[0 : 2])
         for ii in range(obs.shape[0]):
             for jj in range(obs.shape[1]):
-                diff[ii, jj] = cosine(obs[ii, jj], Agent.green)
-                is_green[ii, jj] = diff[ii, jj] < Agent.color_diff_limit
-
-        print(diff.min())
+                is_green[ii, jj] = cosine(obs[ii, jj], Agent.green) < Agent.color_diff_limit
 
         if is_green.any():
             self.pirouette_step_n = 0
