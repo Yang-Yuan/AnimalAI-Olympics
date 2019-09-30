@@ -77,9 +77,9 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
-            # image.set_data(obs)
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
+            image.set_data(obs)
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
             action = agent.step(obs, reward, done, info)
 

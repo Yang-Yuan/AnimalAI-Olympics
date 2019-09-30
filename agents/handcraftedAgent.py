@@ -9,7 +9,8 @@ from scipy.cluster.hierarchy import fcluster
 class Agent(object):
 
     green = [0.506, 0.749, 0.255]
-    color_diff_limit = 0.01
+    green_h = 1.4919028340080973
+    color_diff_limit = 0.3
     position_diff_limit = 1
     center_of_view = [41.5, 41.5]
     aim_error_limit = 5
@@ -66,16 +67,19 @@ class Agent(object):
         # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
         self.step_n += 1
 
-        # is_green = abs((obs - Agent.green)).sum(axis=2) < Agent.color_diff_limit
-        is_green = np.zeros(obs.shape[0 : 2], dtype = bool)
-        for ii in range(obs.shape[0]):
-            for jj in range(obs.shape[1]):
-                is_green[ii, jj] = cosine(obs[ii, jj], Agent.green) < Agent.color_diff_limit
+        diff_green = abs(Agent.toHueImage(obs) - Agent.green_h)
+        is_green = diff_green < Agent.color_diff_limit
+        # is_green = np.zeros(obs.shape[0 : 2], dtype = bool)
+        # for ii in range(obs.shape[0]):
+        #     for jj in range(obs.shape[1]):
+        #         q = obs[ii, jj] / Agent.green
+        #         is_green[ii, jj] = abs(q - q[[1, 2, 0]]).max() < Agent.color_diff_limit
 
         if is_green.any():
             self.pirouette_step_n = 0
             ind_green = np.where(is_green)
         else:
+            print(diff_green.min())
             self.pirouette_step_n += 1
             return [0, 1]
 
@@ -102,3 +106,35 @@ class Agent(object):
             return [0, 1]
         else:
             return [1, 0]
+
+    @staticmethod
+    def toHueImage(img):
+        h_img = np.zeros(img.shape[0 : 2])
+        for ii in range(img.shape[0]):
+            for jj in range(img.shape[1]):
+                h_img[ii, jj] = Agent.toHue(img[ii, jj])
+
+        return h_img
+
+
+    @staticmethod
+    def toHue(rgb):
+        ind_min = rgb.argmin()
+        ind_max = rgb.argmax()
+        diff = rgb[ind_max] - rgb[ind_min]
+
+        if 0 == diff:
+            return 0
+
+        if 0 == ind_max:
+            h = (rgb[1] - rgb[2]) / diff
+        elif 1 == ind_max:
+            h = 2 + (rgb[2] - rgb[0]) / diff
+        else:
+            h = 4 + (rgb[0] - rgb[1]) / diff
+
+        if h < 0:
+            h += 6
+
+        return h
+
