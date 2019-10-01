@@ -39,7 +39,7 @@ arenaConfigs = ['../configs/1-Food/single-static.yaml',
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
 
-seed = 999
+seed = 777
 base_port = 5005
 sub_id = 1
 run_id = 'train_example'
@@ -89,6 +89,10 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
+            # if '../configs/1-Food/two-static.yaml' == arenaConfig and sample_n >= 40:
+            #     image.set_data(obs)
+            #     fig.canvas.draw()
+            #     fig.canvas.flush_events()
             image.set_data(obs)
             fig.canvas.draw()
             fig.canvas.flush_events()

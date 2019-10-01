@@ -58,9 +58,9 @@ class Agent(object):
         if done:
             return [0, 0]
 
-        if self.pirouette_step_n > 60:
+        if self.pirouette_step_n > 70:
             self.pirouette_step_n = 0
-            return [random.randint(1, 2), random.randint(1, 2)]
+            return [1, 0]
 
         self.total_reward += reward
         # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
@@ -81,7 +81,6 @@ class Agent(object):
 
 
         if is_green.any():
-            self.pirouette_step_n = 0
             ind_green = np.where(is_green)
         else:
             self.pirouette_step_n += 1
@@ -106,15 +105,20 @@ class Agent(object):
 
         if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             if target_size < Agent.size_limit:
+                self.pirouette_step_n = 0
                 return [1, 2]
             else:
+                self.pirouette_step_n += 1
                 return [0, 2]
         elif diff_center[1] > Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             if target_size < Agent.size_limit:
+                self.pirouette_step_n = 0
                 return [1, 1]
             else:
+                self.pirouette_step_n += 1
                 return [0, 1]
         else:
+            self.pirouette_step_n = 0
             return [1, 0]
 
     @staticmethod
