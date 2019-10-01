@@ -23,7 +23,18 @@ from handcraftedAgent import Agent
 #                 '../examples/configs/6-Generalization.yaml',
 #                 '../examples/configs/7-InternalMemory.yaml']
 
-arenaConfigs = ['../configs/1-Food/single-static.yaml']
+arenaConfigs = ['../configs/1-Food/single-static.yaml',
+                '../configs/1-Food/two-static.yaml',
+                '../configs/1-Food/three-static.yaml',
+                '../configs/1-Food/multi-static.yaml',
+                '../configs/1-Food/single-dynamic.yaml',
+                '../configs/1-Food/two-dynamic.yaml',
+                '../configs/1-Food/three-dynamic.yaml',
+                '../configs/1-Food/multi-dynamic.yaml',
+                '../configs/1-Food/single-mix.yaml',
+                '../configs/1-Food/two-mix.yaml',
+                '../configs/1-Food/three-mix.yaml',
+                '../configs/1-Food/multi-mix.yaml']
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
@@ -58,16 +69,17 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
-# plt.ion()
-# fig, ax = plt.subplots()
-# image = ax.imshow(np.zeros((resolution, resolution, 3)))
+plt.ion()
+fig, ax = plt.subplots()
+image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 agent = Agent()
 
 for arenaConfig in arenaConfigs:
+    print(arenaConfig)
     arena_config_in = ArenaConfig(arenaConfig)
     for sample_n in range(constants.sample_size_per_task):
-        print("Sample: {}".format(sample_n))
+        print("ArenaConfig; {} Sample: {}".format(arenaConfig, sample_n))
         agent.reset(arena_config_in.arenas[0].t)
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
@@ -77,9 +89,9 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
-            # image.set_data(obs)
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
+            image.set_data(obs)
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
             action = agent.step(obs, reward, done, info)
 
