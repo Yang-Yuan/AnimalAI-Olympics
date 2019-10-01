@@ -23,18 +23,18 @@ from handcraftedAgent import Agent
 #                 '../examples/configs/6-Generalization.yaml',
 #                 '../examples/configs/7-InternalMemory.yaml']
 
-arenaConfigs = ['../configs/1-Food/single-static.yaml',
-                '../configs/1-Food/two-static.yaml',
-                '../configs/1-Food/three-static.yaml',
-                '../configs/1-Food/multi-static.yaml',
-                '../configs/1-Food/single-dynamic.yaml',
-                '../configs/1-Food/two-dynamic.yaml',
-                '../configs/1-Food/three-dynamic.yaml',
-                '../configs/1-Food/multi-dynamic.yaml',
-                '../configs/1-Food/single-mix.yaml',
-                '../configs/1-Food/two-mix.yaml',
-                '../configs/1-Food/three-mix.yaml',
-                '../configs/1-Food/multi-mix.yaml']
+arenaConfigs = ['../configs/1-Food/single-static.yaml']
+                # '../configs/1-Food/two-static.yaml',
+                # '../configs/1-Food/three-static.yaml',
+                # '../configs/1-Food/multi-static.yaml',
+                # '../configs/1-Food/single-dynamic.yaml',
+                # '../configs/1-Food/two-dynamic.yaml',
+                # '../configs/1-Food/three-dynamic.yaml',
+                # '../configs/1-Food/multi-dynamic.yaml',
+                # '../configs/1-Food/single-mix.yaml',
+                # '../configs/1-Food/two-mix.yaml',
+                # '../configs/1-Food/three-mix.yaml',
+                # '../configs/1-Food/multi-mix.yaml']
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
@@ -84,16 +84,16 @@ for arenaConfig in arenaConfigs:
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
         while True:
-            obs = brainInfo['Learner'].visual_observations[0][0, :, :, :]
+            obs = brainInfo['Learner'].visual_observations[0][0, :, :, :], brainInfo['Learner'].vector_observations
             reward = brainInfo['Learner'].rewards[0]
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
             # if '../configs/1-Food/two-static.yaml' == arenaConfig and sample_n >= 40:
-            #     image.set_data(obs)
+            #     image.set_data(obs[0])
             #     fig.canvas.draw()
             #     fig.canvas.flush_events()
-            image.set_data(obs)
+            image.set_data(obs[0])
             fig.canvas.draw()
             fig.canvas.flush_events()
 

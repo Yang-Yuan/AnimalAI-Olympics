@@ -1,7 +1,5 @@
 import numpy as np
-import random
-import sys
-from scipy.spatial.distance import pdist, cosine
+from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
 
@@ -62,23 +60,18 @@ class Agent(object):
             self.pirouette_step_n = 0
             return [1, 0]
 
-        self.total_reward += reward
-        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
-        self.step_n += 1
-
-        diff_green = abs(Agent.toHueImage(obs) - Agent.green_h)
+        obs_visual = obs[0] if isinstance(obs, tuple) else obs
+        diff_green = abs(Agent.toHueImage(obs_visual) - Agent.green_h)
         is_green = diff_green < Agent.color_diff_limit
-        # is_green = np.zeros(obs.shape[0 : 2], dtype = bool)
-        # for ii in range(obs.shape[0]):
-        #     for jj in range(obs.shape[1]):
-        #         q = obs[ii, jj] / Agent.green
-        #         is_green[ii, jj] = abs(q - q[[1, 2, 0]]).max() < Agent.color_diff_limit
 
-        if 250 == self.step_n:
-            print(diff_green.min())
-            print("Failed")
-            sys.exit(1)
-
+        # For debug
+        # self.total_reward += reward
+        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        # self.step_n += 1
+        # if 250 == self.step_n:
+        #     print(diff_green.min())
+        #     print("Failed")
+        #     sys.exit(1)
 
         if is_green.any():
             ind_green = np.where(is_green)
