@@ -2,6 +2,8 @@ from animalai.envs.environment import UnityEnvironment
 from animalai.envs.arena_config import ArenaConfig
 import sys
 import random
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(0, 200)
@@ -26,17 +28,21 @@ def init_environment(env_path, docker_target_name, no_graphics, worker_id, seed)
         worker_id=worker_id,
         seed=seed,
         docker_training=docker_training,
-        play=False,
+        play=True,
         inference=True
     )
 
 
 # If no configuration file is provided we default to all objects placed randomly
-if len(sys.argv) > 1:
-    arena_config_in = ArenaConfig(sys.argv[1])
-else:
-    Warning("Cannot find arena config fine, will use the configs/allObjectsRandom.yaml")
-    arena_config_in = ArenaConfig('configs/allObjectsRandom.yaml')
+# if len(sys.argv) > 1:
+#     arena_config_in = ArenaConfig(sys.argv[1])
+# else:
+#     Warning("Cannot find arena config fine, will use the configs/allObjectsRandom.yaml")
+#     arena_config_in = ArenaConfig('configs/allObjectsRandom.yaml')
+
+Tk().withdraw()
+fileName = askopenfilename()
+arena_config_in = ArenaConfig(fileName)
 
 env = init_environment(env_path, docker_target_name, no_graphics, worker_id, run_seed)
 

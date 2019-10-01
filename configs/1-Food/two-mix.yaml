@@ -1,0 +1,11 @@
+!ArenaConfig
+arenas:
+  0: !Arena
+    t: 250
+    items:
+    - !Item
+      name: GoodGoal
+      rotations: [0, 45]
+    - !Item
+      name: GoodGoalBounce
+      rotations: [0, 45]

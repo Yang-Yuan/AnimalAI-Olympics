@@ -58,10 +58,6 @@ class Agent(object):
         if done:
             return [0, 0]
 
-        if 250 == self.step_n:
-            print("Failed")
-            sys.exit(1)
-
         if self.pirouette_step_n > 60:
             self.pirouette_step_n = 0
             return [random.randint(1, 2), random.randint(1, 2)]
@@ -78,11 +74,16 @@ class Agent(object):
         #         q = obs[ii, jj] / Agent.green
         #         is_green[ii, jj] = abs(q - q[[1, 2, 0]]).max() < Agent.color_diff_limit
 
+        if 250 == self.step_n:
+            print(diff_green.min())
+            print("Failed")
+            sys.exit(1)
+
+
         if is_green.any():
             self.pirouette_step_n = 0
             ind_green = np.where(is_green)
         else:
-            print(diff_green.min())
             self.pirouette_step_n += 1
             return [0, 1]
 

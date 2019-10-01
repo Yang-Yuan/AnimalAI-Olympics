@@ -28,7 +28,7 @@ arenaConfigs = ['../configs/1-Food/single-static.yaml']
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
 
-seed = 10
+seed = 999
 base_port = 5005
 sub_id = 1
 run_id = 'train_example'
@@ -58,9 +58,9 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
-plt.ion()
-fig, ax = plt.subplots()
-image = ax.imshow(np.zeros((resolution, resolution, 3)))
+# plt.ion()
+# fig, ax = plt.subplots()
+# image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 agent = Agent()
 
@@ -77,10 +77,9 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
-            if 589 <= sample_n:
-                image.set_data(obs)
-                fig.canvas.draw()
-                fig.canvas.flush_events()
+            # image.set_data(obs)
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
 
             action = agent.step(obs, reward, done, info)
 
