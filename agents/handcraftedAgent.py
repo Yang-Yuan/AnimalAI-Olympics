@@ -57,6 +57,7 @@ class Agent(object):
         if done:
             return [0, 0]
 
+        # Jaja, magic code!
         if self.pirouette_step_n > 70:
             self.pirouette_step_n = 0
             return [1, 0]
@@ -84,10 +85,10 @@ class Agent(object):
         else:
             labels, label_num = measure.label(input = is_green, background = False, return_num = True, connectivity = 1)
             sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-            target_label = np.argmax(sizes)
+            target_label = np.argmax(sizes) + 1
             center_of_target = np.array(np.where(labels == target_label)).mean(axis = 1)
             diff_center = center_of_target - Agent.center_of_view
-            target_size = sizes[target_label]
+            target_size = sizes[target_label - 1]
 
         if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             if target_size < Agent.size_limit:
