@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial.distance import pdist
 from scipy.cluster.hierarchy import linkage
 from scipy.cluster.hierarchy import fcluster
+from skimage import measure
 
 
 class Agent(object):
@@ -73,28 +74,20 @@ class Agent(object):
         #     print("Failed")
         #     sys.exit(1)
 
-        if is_green.any():
-            ind_green = np.where(is_green)
-        else:
+        if not is_green.any():
             self.pirouette_step_n += 1
             return [0, 1]
 
-        X = np.array(ind_green).transpose()
-
-        if 1 == len(X):
-            diff_center = X[0] - Agent.center_of_view
+        if 1 == is_green.sum():
+            diff_center = np.array(np.where(is_green)).transpose()[0] - Agent.center_of_view
             target_size = 1
         else:
-            dist_x = pdist(X, 'cityblock')
-            link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
-            cluster_label_x = fcluster(link_x, Agent.position_diff_limit, 'distance')
-            cluster_labels = np.unique(cluster_label_x)
-            cluster_sizes = [(cluster_label_x == cluster_label).sum() for cluster_label in cluster_labels]
-            largest_cluster_label = cluster_labels[np.argmax(cluster_sizes)]
-            largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
-            center_of_the_largest = largest_cluster.mean(axis=0)
-            diff_center = center_of_the_largest - Agent.center_of_view
-            target_size = len(largest_cluster)
+            labels, label_num = measure.label(input = is_green, background = False, return_num = True, connectivity = 1)
+            sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
+            target_label = np.argmax(sizes)
+            center_of_target = np.array(np.where(labels == target_label)).mean(axis = 1)
+            diff_center = center_of_target - Agent.center_of_view
+            target_size = sizes[target_label]
 
         if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             if target_size < Agent.size_limit:

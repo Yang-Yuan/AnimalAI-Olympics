@@ -38,6 +38,8 @@ ENV https_proxy ""
 # For example, if your agent requires the animalai-train library
 # you can add the following (remove if not needed):
 RUN pip install animalai-train
+RUN pip install numpy
+RUN pip install scipy
 
 
 ########################################################################################################################

@@ -1,37 +1,31 @@
-import yaml
-from animalai_train.trainers.ppo.policy import PPOPolicy
-from animalai.envs.brain import BrainParameters
+import numpy as np
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import linkage
+from scipy.cluster.hierarchy import fcluster
 
 
 class Agent(object):
 
+    green = [0.506, 0.749, 0.255]
+    green_h = 1.4919028340080973
+
+    color_diff_limit = 0.45
+    position_diff_limit = 1
+    size_limit = 5
+
+    center_of_view = [41.5, 41.5]
+    aim_error_limit = 5
+    hl = 2
+
     def __init__(self):
         """
          Load your agent here and initialize anything needed
+         WARNING: any path to files you wish to access on the docker should be ABSOLUTE PATHS
         """
-
-        # Load the configuration and model using ABSOLUTE PATHS
-        self.configuration_file = '/aaio/data/trainer_config.yaml'
-        self.model_path = '/aaio/data/1-Food/Learner'
-
-        self.brain = BrainParameters(brain_name='Learner',
-                                     camera_resolutions=[{'height': 84, 'width': 84, 'blackAndWhite': False}],
-                                     num_stacked_vector_observations=1,
-                                     vector_action_descriptions=['', ''],
-                                     vector_action_space_size=[3, 3],
-                                     vector_action_space_type=0,  # corresponds to discrete
-                                     vector_observation_space_size=3
-                                     )
-        self.trainer_params = yaml.load(open(self.configuration_file))['Learner']
-        self.trainer_params['keep_checkpoints'] = 0
-        self.trainer_params['model_path'] = self.model_path
-        self.trainer_params['use_recurrent'] = False
-
-        self.policy = PPOPolicy(brain=self.brain,
-                                seed=0,
-                                trainer_params=self.trainer_params,
-                                is_training=False,
-                                load=True)
+        self.t = 0
+        self.step_n = 0
+        self.total_reward = 0
+        self.pirouette_step_n = 0
 
     def reset(self, t=250):
         """
@@ -39,17 +33,115 @@ class Agent(object):
         Leave blank if nothing needs to happen there
         :param t the number of timesteps in the episode
         """
+        self.t = t
+        self.step_n = 0
+        self.total_reward = 0
+        self.pirouette_step_n = 0
 
     def step(self, obs, reward, done, info):
         """
+        A single step the agent should take based on the current state of the environment
+        We will run the Gym environment (AnimalAIEnv) and pass the arguments returned by env.step() to
+        the agent.
+
+        Note that should if you prefer using the BrainInfo object that is usually returned by the Unity
+        environment, it can be accessed from info['brain_info'].
+
         :param obs: agent's observation of the current environment
         :param reward: amount of reward returned after previous action
         :param done: whether the episode has ended.
         :param info: contains auxiliary diagnostic information, including BrainInfo.
         :return: the action to take, a list or size 2
         """
+        if done:
+            return [0, 0]
 
-        brain_info = info['brain_info']
-        action = self.policy.evaluate(brain_info=brain_info)['action']
+        if self.pirouette_step_n > 70:
+            self.pirouette_step_n = 0
+            return [1, 0]
 
-        return action
+        obs_visual = obs[0] if isinstance(obs, tuple) else obs
+        diff_green = abs(Agent.toHueImage(obs_visual) - Agent.green_h)
+        is_green = diff_green < Agent.color_diff_limit
+
+        # For debug
+        # self.total_reward += reward
+        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
+        # self.step_n += 1
+        # if 250 == self.step_n:
+        #     print(diff_green.min())
+        #     print("Failed")
+        #     sys.exit(1)
+
+        if is_green.any():
+            ind_green = np.where(is_green)
+        else:
+            self.pirouette_step_n += 1
+            return [0, 1]
+
+        X = np.array(ind_green).transpose()
+
+        if 1 == len(X):
+            diff_center = X[0] - Agent.center_of_view
+            target_size = 1
+        else:
+            dist_x = pdist(X, 'cityblock')
+            link_x = linkage(y=dist_x, method="single", optimal_ordering=True)
+            cluster_label_x = fcluster(link_x, Agent.position_diff_limit, 'distance')
+            cluster_labels = np.unique(cluster_label_x)
+            cluster_sizes = [(cluster_label_x == cluster_label).sum() for cluster_label in cluster_labels]
+            largest_cluster_label = cluster_labels[np.argmax(cluster_sizes)]
+            largest_cluster = X[np.where(cluster_label_x == largest_cluster_label)]
+            center_of_the_largest = largest_cluster.mean(axis=0)
+            diff_center = center_of_the_largest - Agent.center_of_view
+            target_size = len(largest_cluster)
+
+        if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
+            if target_size < Agent.size_limit:
+                self.pirouette_step_n = 0
+                return [1, 2]
+            else:
+                self.pirouette_step_n += 1
+                return [0, 2]
+        elif diff_center[1] > Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
+            if target_size < Agent.size_limit:
+                self.pirouette_step_n = 0
+                return [1, 1]
+            else:
+                self.pirouette_step_n += 1
+                return [0, 1]
+        else:
+            self.pirouette_step_n = 0
+            return [1, 0]
+
+    @staticmethod
+    def toHueImage(img):
+        h_img = np.zeros(img.shape[0 : 2])
+        for ii in range(img.shape[0]):
+            for jj in range(img.shape[1]):
+                h_img[ii, jj] = Agent.toHue(img[ii, jj])
+
+        return h_img
+
+
+    @staticmethod
+    def toHue(rgb):
+        ind_min = rgb.argmin()
+        ind_max = rgb.argmax()
+        diff = rgb[ind_max] - rgb[ind_min]
+
+        if 0 == diff:
+            return 0
+
+        if 0 == ind_max:
+            h = (rgb[1] - rgb[2]) / diff
+        elif 1 == ind_max:
+            h = 2 + (rgb[2] - rgb[0]) / diff
+        else:
+            h = 4 + (rgb[0] - rgb[1]) / diff
+
+        if h < 0:
+            h += 6
+
+        return h
+
