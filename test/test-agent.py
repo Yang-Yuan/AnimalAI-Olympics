@@ -104,7 +104,8 @@ for arenaConfig in arenaConfigs:
 
             n_bins = 30
             obs_hsv = color.rgb2hsv(obs[0])
-            _, bins, patches = axs[1].hist(obs_hsv[:, :, 0].flatten(), bins = n_bins, range = (0, 1))
+            axs[1].cla()
+            _, bins, patches = axs[1].hist(obs_hsv[:, :, 0].flatten(), bins = n_bins, range = (0, 1), density = True)
 
             bin_labels = np.digitize(obs_hsv[:, :, 0], bins)
             for bin_label, patch in zip(range(1, n_bins + 1), patches):
