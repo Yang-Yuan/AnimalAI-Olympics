@@ -104,15 +104,16 @@ for arenaConfig in arenaConfigs:
 
             n_bins = 30
             obs_hsv = color.rgb2hsv(obs[0])
-            axs[1].cla()
-            _, bins, patches = axs[1].hist(obs_hsv[:, :, 0].flatten(), bins = n_bins, range = (0, 1), density = True)
-
-            bin_labels = np.digitize(obs_hsv[:, :, 0], bins)
-            for bin_label, patch in zip(range(1, n_bins + 1), patches):
+            H, bin_edges = np.histogram(a = obs_hsv[:, :, 0], bins = n_bins, range = (0, 1), density = True)
+            bin_labels = np.digitize(obs_hsv[:, :, 0], bin_edges)
+            bin_colors = np.zeros((n_bins, 3))
+            for bin_label in range(1, n_bins):
                 bin_pixel = obs[0][np.where(bin_labels == bin_label)]
                 if 0 != len(bin_pixel):
-                    patch.set_facecolor(bin_pixel.mean(axis = 0))
+                    bin_colors[bin_label - 1] = bin_pixel.mean(axis = 0)
 
+            axs[1].cla()
+            bar_containers = axs[1].bar(x = (bin_edges[ : -1] + bin_edges[1 : ]) / 2, height = H, color = bin_colors, width = 1 / n_bins)
             fig.canvas.draw()
             fig.canvas.flush_events()
 
