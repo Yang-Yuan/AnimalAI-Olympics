@@ -12,6 +12,8 @@ import os
 import uuid
 import constants
 import time
+from skimage import segmentation, color
+from scipy.stats import binned_statistic
 
 from handcraftedAgent import Agent
 
@@ -23,18 +25,18 @@ from handcraftedAgent import Agent
 #                 '../examples/configs/6-Generalization.yaml',
 #                 '../examples/configs/7-InternalMemory.yaml']
 
-arenaConfigs = ['../configs/1-Food/single-dynamic.yaml']
-                # '../configs/1-Food/two-static.yaml',
-                # '../configs/1-Food/three-static.yaml',
-                # '../configs/1-Food/multi-static.yaml',
-                # '../configs/1-Food/single-dynamic.yaml',
-                # '../configs/1-Food/two-dynamic.yaml',
-                # '../configs/1-Food/three-dynamic.yaml',
-                # '../configs/1-Food/multi-dynamic.yaml',
-                # '../configs/1-Food/single-mix.yaml',
-                # '../configs/1-Food/two-mix.yaml',
-                # '../configs/1-Food/three-mix.yaml',
-                # '../configs/1-Food/multi-mix.yaml']
+arenaConfigs = ['../configs/1-Food/single-static.yaml',
+                '../configs/1-Food/two-static.yaml',
+                '../configs/1-Food/three-static.yaml',
+                '../configs/1-Food/multi-static.yaml',
+                '../configs/1-Food/single-dynamic.yaml',
+                '../configs/1-Food/two-dynamic.yaml',
+                '../configs/1-Food/three-dynamic.yaml',
+                '../configs/1-Food/multi-dynamic.yaml',
+                '../configs/1-Food/single-mix.yaml',
+                '../configs/1-Food/two-mix.yaml',
+                '../configs/1-Food/three-mix.yaml',
+                '../configs/1-Food/multi-mix.yaml']
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
@@ -70,8 +72,8 @@ env = UnityEnvironment(
 )
 
 plt.ion()
-fig, ax = plt.subplots()
-image = ax.imshow(np.zeros((resolution, resolution, 3)))
+fig, axs = plt.subplots(ncols = 2, nrows = 1)
+image = axs[0].imshow(np.zeros((resolution, resolution, 3)))
 
 agent = Agent()
 
@@ -90,10 +92,26 @@ for arenaConfig in arenaConfigs:
             info = {"brain_info": brainInfo}
 
             # if sample_n == 56:
-            #     image.set_data(obs[0])
-            #     fig.canvas.draw()
-            #     fig.canvas.flush_events()
             image.set_data(obs[0])
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
+
+            # seg = segmentation.felzenszwalb(color.rgb2hsv(obs[0]), scale = 500)
+            # seg = segmentation.quickshift(color.rgb2hsv(obs[0]), ratio = 1, kernel_size = 100)
+            # image.set_data(segmentation.mark_boundaries(obs[0], seg))
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
+
+            n_bins = 30
+            obs_hsv = color.rgb2hsv(obs[0])
+            _, bins, patches = axs[1].hist(obs_hsv[:, :, 0].flatten(), bins = n_bins, range = (0, 1))
+
+            bin_labels = np.digitize(obs_hsv[:, :, 0], bins)
+            for bin_label, patch in zip(range(1, n_bins + 1), patches):
+                bin_pixel = obs[0][np.where(bin_labels == bin_label)]
+                if 0 != len(bin_pixel):
+                    patch.set_facecolor(bin_pixel.mean(axis = 0))
+
             fig.canvas.draw()
             fig.canvas.flush_events()
 

@@ -40,6 +40,7 @@ ENV https_proxy ""
 RUN pip install animalai-train
 RUN pip install numpy
 RUN pip install scipy
+RUN pip install scikit-image
 
 
 ########################################################################################################################
