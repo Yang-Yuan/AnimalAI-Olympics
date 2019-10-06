@@ -71,9 +71,16 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
+n_bins = 30
+bin_edges = np.linspace(start = 0, stop = 1, num = n_bins + 1)
+
 plt.ion()
 fig, axs = plt.subplots(ncols = 2, nrows = 1)
 image = axs[0].imshow(np.zeros((resolution, resolution, 3)))
+bars = axs[1].bar(x = (bin_edges[ : -1] + bin_edges[1 : ]) / 2,
+                  height = np.repeat(n_bins, n_bins),
+                  width = 1 / n_bins,
+                  bottom = 0)
 
 agent = Agent()
 
@@ -102,7 +109,6 @@ for arenaConfig in arenaConfigs:
             # fig.canvas.draw()
             # fig.canvas.flush_events()
 
-            n_bins = 30
             obs_hsv = color.rgb2hsv(obs[0])
             H, bin_edges = np.histogram(a = obs_hsv[:, :, 0], bins = n_bins, range = (0, 1), density = True)
             bin_labels = np.digitize(obs_hsv[:, :, 0], bin_edges)
@@ -112,8 +118,9 @@ for arenaConfig in arenaConfigs:
                 if 0 != len(bin_pixel):
                     bin_colors[bin_label - 1] = bin_pixel.mean(axis = 0)
 
-            axs[1].cla()
-            bar_containers = axs[1].bar(x = (bin_edges[ : -1] + bin_edges[1 : ]) / 2, height = H, color = bin_colors, width = 1 / n_bins)
+            for bar, height, face_color in zip(bars, H, bin_colors):
+                bar.set_height(height)
+                bar.set_facecolor(face_color)
             fig.canvas.draw()
             fig.canvas.flush_events()
 
