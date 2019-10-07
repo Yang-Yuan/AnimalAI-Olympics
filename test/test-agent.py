@@ -71,18 +71,15 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
-n_bins = 30
-bin_edges = np.linspace(start = 0, stop = 1, num = n_bins + 1)
+agent = Agent()
 
 plt.ion()
 fig, axs = plt.subplots(ncols = 2, nrows = 1)
 image = axs[0].imshow(np.zeros((resolution, resolution, 3)))
-bars = axs[1].bar(x = (bin_edges[ : -1] + bin_edges[1 : ]) / 2,
-                  height = np.repeat(n_bins, n_bins),
-                  width = 1 / n_bins,
+bars = axs[1].bar(x = (agent.bin_edges[ : -1] + agent.bin_edges[1 : ]) / 2,
+                  height = np.repeat(agent.resolution * agent.resolution, agent.n_bins),
+                  width = agent.bin_length,
                   bottom = 0)
-
-agent = Agent()
 
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
@@ -98,33 +95,15 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
-            # if sample_n == 56:
+            action = agent.step(obs, reward, done, info)
+
+            # Visualization
             image.set_data(obs[0])
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
-
-            # seg = segmentation.felzenszwalb(color.rgb2hsv(obs[0]), scale = 500)
-            # seg = segmentation.quickshift(color.rgb2hsv(obs[0]), ratio = 1, kernel_size = 100)
-            # image.set_data(segmentation.mark_boundaries(obs[0], seg))
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
-
-            obs_hsv = color.rgb2hsv(obs[0])
-            H, bin_edges = np.histogram(a = obs_hsv[:, :, 0], bins = n_bins, range = (0, 1), density = True)
-            bin_labels = np.digitize(obs_hsv[:, :, 0], bin_edges)
-            bin_colors = np.zeros((n_bins, 3))
-            for bin_label in range(1, n_bins):
-                bin_pixel = obs[0][np.where(bin_labels == bin_label)]
-                if 0 != len(bin_pixel):
-                    bin_colors[bin_label - 1] = bin_pixel.mean(axis = 0)
-
-            for bar, height, face_color in zip(bars, H, bin_colors):
+            for bar, height, face_color in zip(bars, agent.bin_sizes, agent.bin_colors):
                 bar.set_height(height)
-                bar.set_facecolor(face_color)
+                bar.set_facecolor(plt.cm.hsv(face_color))
             fig.canvas.draw()
             fig.canvas.flush_events()
-
-            action = agent.step(obs, reward, done, info)
 
             if all(brainInfo['Learner'].local_done):
                 break

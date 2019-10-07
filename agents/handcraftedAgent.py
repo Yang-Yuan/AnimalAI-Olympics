@@ -4,9 +4,9 @@ from skimage import measure
 
 class Agent(object):
     green = [0.506, 0.749, 0.255]
-    green_h = 1.4919028340080973
+    green_h = 0.24865047
 
-    color_diff_limit = 0.45
+    color_diff_limit = 0.075
     position_diff_limit = 1
     size_limit = 5
 
@@ -28,6 +28,12 @@ class Agent(object):
         self.diff_center_old = None
         self.target_size_old = None
         self.visual_memory = None
+
+        self.n_bins = 30
+        self.bin_edges = np.linspace(start=0, stop=1, num=self.n_bins + 1)
+        self.bin_length = 1 / self.n_bins
+        self.bin_sizes = np.zeros(self.n_bins)
+        self.bin_colors = np.zeros(self.n_bins)
 
     def reset(self, t=250):
         """
@@ -65,7 +71,16 @@ class Agent(object):
             return [1, 0]
 
         obs_visual, obs_vector = obs
-        diff_green = abs(Agent.toHueImage(obs_visual) - Agent.green_h)
+        obs_visual_h = Agent.toHue(obs_visual)
+
+        bin_labels = np.digitize(obs_visual_h, self.bin_edges)
+        for bin_label in range(1, self.n_bins + 1):
+            bin_pixel = obs_visual_h[np.where(bin_labels == bin_label)]
+            self.bin_sizes[bin_label - 1] = len(bin_pixel)
+            if 0 != len(bin_pixel):
+                self.bin_colors[bin_label - 1] = bin_pixel.mean(axis=0)
+
+        diff_green = abs(obs_visual_h - Agent.green_h)
         is_green = diff_green < Agent.color_diff_limit
 
         # self.visual_memory[self.step_n] = is_green
@@ -83,8 +98,6 @@ class Agent(object):
         if not is_green.any():
             self.pirouette_step_n += 1
             return [0, 1]
-
-
 
         if 1 == is_green.sum():
             diff_center = np.array(np.where(is_green)).transpose()[0] - Agent.center_of_view
@@ -122,31 +135,33 @@ class Agent(object):
             return [1, 0]
 
     @staticmethod
-    def toHueImage(img):
-        h_img = np.zeros(img.shape[0: 2])
-        for ii in range(img.shape[0]):
-            for jj in range(img.shape[1]):
-                h_img[ii, jj] = Agent.toHue(img[ii, jj])
-
-        return h_img
-
-    @staticmethod
     def toHue(rgb):
-        ind_min = rgb.argmin()
-        ind_max = rgb.argmax()
-        diff = rgb[ind_max] - rgb[ind_min]
+        out_h = np.zeros(rgb.shape[:-1])
 
-        if 0 == diff:
-            return 0
+        out_v = rgb.max(-1) # max
+        delta = rgb.ptp(-1) # max - min
 
-        if 0 == ind_max:
-            h = (rgb[1] - rgb[2]) / diff
-        elif 1 == ind_max:
-            h = 2 + (rgb[2] - rgb[0]) / diff
-        else:
-            h = 4 + (rgb[0] - rgb[1]) / diff
+        old_settings = np.seterr(invalid='ignore')
 
-        if h < 0:
-            h += 6
+        # red is max
+        idx = (rgb[:, :, 0] == out_v)
+        out_h[idx] = (rgb[idx, 1] - rgb[idx, 2]) / delta[idx]
 
-        return h
+        # green is max
+        idx = (rgb[:, :, 1] == out_v)
+        out_h[idx] = 2. + (rgb[idx, 2] - rgb[idx, 0]) / delta[idx]
+
+        # blue is max
+        idx = (rgb[:, :, 2] == out_v)
+        out_h[idx] = 4. + (rgb[idx, 0] - rgb[idx, 1]) / delta[idx]
+
+        # normorlization
+        out_h = (out_h / 6.) % 1.
+        out_h[delta == 0.] = 0.
+
+        np.seterr(**old_settings)
+
+        # remove NaN
+        out_h[np.isnan(out_h)] = 0
+
+        return out_h
