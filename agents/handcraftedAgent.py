@@ -4,7 +4,7 @@ from skimage import measure
 
 class Agent(object):
     green = [0.506, 0.749, 0.255]
-    green_h = 0.24865047
+    predfined_colors_h = {"green": 0.24865047}
 
     color_diff_limit = 0.075
     position_diff_limit = 1
@@ -15,6 +15,8 @@ class Agent(object):
     hl = 2
     default_test_length = 1000
     resolution = 84
+
+    bin_size_limit = 10
 
     def __init__(self):
         """
@@ -32,8 +34,13 @@ class Agent(object):
         self.n_bins = 30
         self.bin_edges = np.linspace(start=0, stop=1, num=self.n_bins + 1)
         self.bin_length = 1 / self.n_bins
-        self.bin_sizes = np.zeros(self.n_bins)
+        self.bin_sizes = np.zeros(self.n_bins, dtype = np.int)
         self.bin_colors = np.zeros(self.n_bins)
+        self.predefined_colors_bins = {"green": np.digitize(Agent.predfined_colors_h.get("green"), self.bin_edges)}
+
+        self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
+        self.bin_pixels_idx = []
+
 
     def reset(self, t=250):
         """
@@ -59,7 +66,7 @@ class Agent(object):
         :param obs: agent's observation of the current environment
         :param reward: amount of reward returned after previous action
         :param done: whether the episode has ended.
-        :param info: contains auxiliary diagnostic information, including BrainInfo.
+        :param info: contains auxiliary diagnostic information, including eBrainInfo.
         :return: the action to take, a list or size 2
         """
         if done:
@@ -73,15 +80,56 @@ class Agent(object):
         obs_visual, obs_vector = obs
         obs_visual_h = Agent.toHue(obs_visual)
 
+        # update bin_labels, self.bin_sizes, self.bin_color
         bin_labels = np.digitize(obs_visual_h, self.bin_edges)
+        self.bin_pixels_idx = []
         for bin_label in range(1, self.n_bins + 1):
-            bin_pixel = obs_visual_h[np.where(bin_labels == bin_label)]
-            self.bin_sizes[bin_label - 1] = len(bin_pixel)
-            if 0 != len(bin_pixel):
-                self.bin_colors[bin_label - 1] = bin_pixel.mean(axis=0)
+            self.bin_pixels_idx.append(np.array(np.where(bin_labels == bin_label)))
+            self.bin_sizes[bin_label - 1] = self.bin_pixels_idx[bin_label - 1].shape[1]
+            if 0 != self.bin_sizes[bin_label - 1]:
+                self.bin_colors[bin_label - 1] = obs_visual_h[tuple(self.bin_pixels_idx[bin_label - 1])].mean(axis=0)
 
-        diff_green = abs(obs_visual_h - Agent.green_h)
+        # rectify bins so that the pixels in each bin are not only close in color but also constitute one or more
+        # connected areas
+        # In other words, I don't allow these boundary points to be a single bin;
+        # they must affiliate to some object-level bins.
+        # for bin_idx in range(self.n_bins):
+        #     if self.bin_sizes[bin_idx] > Agent.bin_size_limit \
+        #             or (bin_idx in self.predefined_colors_bins.values()):
+        #         continue
+        #
+        #     # fine the nearest significant bin
+        #     # and add this bin into the nearest significant bin
+        #     delta = 1
+        #     while True:
+        #         if bin_idx - delta >= 0 and self.bin_sizes[bin_idx - delta] > Agent.bin_size_limit:
+        #             self.bin_sizes[bin_idx - delta] += self.bin_sizes[bin_idx]
+        #             self.bin_sizes[bin_idx] = 0
+        #             self.bin_pixels_idx[bin_idx - delta] = np.concatenate( \
+        #                 (self.bin_pixels_idx[bin_idx], self.bin_pixels_idx[bin_idx - delta]), axis = 1)
+        #             break
+        #
+        #         if bin_idx + delta < self.n_bins and self.bin_sizes[bin_idx + delta] > Agent.bin_size_limit:
+        #             self.bin_sizes[bin_idx + delta] += self.bin_sizes[bin_idx]
+        #             self.bin_sizes[bin_idx] = 0
+        #             self.bin_pixels_idx[bin_idx + delta] = np.concatenate( \
+        #                 (self.bin_pixels_idx[bin_idx], self.bin_pixels_idx[bin_idx + delta]), axis = 1)
+        #             break
+        #
+        #         delta += 1
+
+        # This part will be uncommented after each bin has been optimized (purified)
+        # # try to build an visual imagery reconstruct the image using the rectified bin
+        # for bin_idx in range(self.n_bins):
+        #     self.visual_imagery[tuple(self.bin_pixels_idx[bin_idx])] = self.bin_colors[bin_idx]
+        # # for debug
+        # self.visual_imagery = -np.ones((Agent.resolution, Agent.resolution))
+        # if (self.visual_imagery == -1).any():
+        #     raise Exception("You missed some pixel, idiot!")
+
+        diff_green = abs(obs_visual_h - Agent.predfined_colors_h.get("green"))
         is_green = diff_green < Agent.color_diff_limit
+
 
         # self.visual_memory[self.step_n] = is_green
         self.step_n += 1

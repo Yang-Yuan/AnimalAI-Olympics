@@ -80,6 +80,9 @@ bars = axs[1].bar(x = (agent.bin_edges[ : -1] + agent.bin_edges[1 : ]) / 2,
                   height = np.repeat(agent.resolution * agent.resolution, agent.n_bins),
                   width = agent.bin_length,
                   bottom = 0)
+# visual_imagery = axs[2].imshow(np.zeros((resolution, resolution, 3)))
+
+# fig_tmp, ax_tmp = plt.subplots()
 
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
@@ -90,10 +93,18 @@ for arenaConfig in arenaConfigs:
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
         while True:
+
             obs = brainInfo['Learner'].visual_observations[0][0, :, :, :], brainInfo['Learner'].vector_observations
             reward = brainInfo['Learner'].rewards[0]
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
+
+            # ax_tmp.imshow(obs[0])
+            # fig_tmp.savefig("tmp.png")
+
+            # image.set_data(obs[0])
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
 
             action = agent.step(obs, reward, done, info)
 
@@ -102,6 +113,7 @@ for arenaConfig in arenaConfigs:
             for bar, height, face_color in zip(bars, agent.bin_sizes, agent.bin_colors):
                 bar.set_height(height)
                 bar.set_facecolor(plt.cm.hsv(face_color))
+            # visual_imagery.set_data(plt.cm.hsv(agent.visual_imagery))
             fig.canvas.draw()
             fig.canvas.flush_events()
 
@@ -110,5 +122,7 @@ for arenaConfig in arenaConfigs:
             else:
                 brainInfo = env.step(action)
 
+plt.close(fig)
+# plt.close(fig_tmp)
 env.close()
 
