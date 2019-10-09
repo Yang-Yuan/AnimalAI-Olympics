@@ -83,6 +83,8 @@ bars = axs[1].bar(x = (agent.bin_edges[ : -1] + agent.bin_edges[1 : ]) / 2,
 # visual_imagery = axs[2].imshow(np.zeros((resolution, resolution, 3)))
 
 # fig_tmp, ax_tmp = plt.subplots()
+# image_tmp = ax_tmp.imshow(np.zeros((resolution, resolution, 3)))
+
 
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
@@ -108,11 +110,19 @@ for arenaConfig in arenaConfigs:
 
             action = agent.step(obs, reward, done, info)
 
+            # seg = segmentation.felzenszwalb(color.rgb2hsv(obs[0]), scale = 500)
+            # seg = segmentation.slic(color.rgb2hsv(obs[0]))
+            # seg = segmentation.quickshift(color.rgb2hsv(obs[0]), ratio = 1, kernel_size = 100)
+            # image_tmp.set_data(segmentation.mark_boundaries(obs[0], seg))
+            # fig_tmp.canvas.draw()
+            # fig_tmp.canvas.flush_events()
+
             # Visualization
             image.set_data(obs[0])
-            for bar, height, face_color in zip(bars, agent.bin_sizes, agent.bin_colors):
+            for bar, height, face_color, idx in zip(bars, agent.bin_sizes, agent.bin_colors, agent.bin_pixels_idx):
                 bar.set_height(height)
                 bar.set_facecolor(plt.cm.hsv(face_color))
+                # bar.set_facecolor(obs[0][tuple(idx)].mean(axis = 0))
             # visual_imagery.set_data(plt.cm.hsv(agent.visual_imagery))
             fig.canvas.draw()
             fig.canvas.flush_events()
