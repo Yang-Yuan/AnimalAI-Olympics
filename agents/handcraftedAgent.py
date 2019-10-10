@@ -80,43 +80,12 @@ class Agent(object):
         obs_visual, obs_vector = obs
         obs_visual_h = Agent.toHue(obs_visual)
 
-        # update bin_labels, self.bin_sizes, self.bin_color
-        bin_labels = np.digitize(obs_visual_h, self.bin_edges)
-        self.bin_pixels_idx = []
-        for bin_label in range(1, self.n_bins + 1):
-            self.bin_pixels_idx.append(np.array(np.where(bin_labels == bin_label)))
-            self.bin_sizes[bin_label - 1] = self.bin_pixels_idx[bin_label - 1].shape[1]
-            if 0 != self.bin_sizes[bin_label - 1]:
-                self.bin_colors[bin_label - 1] = obs_visual_h[tuple(self.bin_pixels_idx[bin_label - 1])].mean(axis=0)
 
         # rectify bins so that the pixels in each bin are not only close in color but also constitute one or more
         # connected areas
         # In other words, I don't allow these boundary points to be a single bin;
         # they must affiliate to some object-level bins.
-        # for bin_idx in range(self.n_bins):
-        #     if self.bin_sizes[bin_idx] > Agent.bin_size_limit \
-        #             or (bin_idx in self.predefined_colors_bins.values()):
-        #         continue
-        #
-        #     # fine the nearest significant bin
-        #     # and add this bin into the nearest significant bin
-        #     delta = 1
-        #     while True:
-        #         if bin_idx - delta >= 0 and self.bin_sizes[bin_idx - delta] > Agent.bin_size_limit:
-        #             self.bin_sizes[bin_idx - delta] += self.bin_sizes[bin_idx]
-        #             self.bin_sizes[bin_idx] = 0
-        #             self.bin_pixels_idx[bin_idx - delta] = np.concatenate( \
-        #                 (self.bin_pixels_idx[bin_idx], self.bin_pixels_idx[bin_idx - delta]), axis = 1)
-        #             break
-        #
-        #         if bin_idx + delta < self.n_bins and self.bin_sizes[bin_idx + delta] > Agent.bin_size_limit:
-        #             self.bin_sizes[bin_idx + delta] += self.bin_sizes[bin_idx]
-        #             self.bin_sizes[bin_idx] = 0
-        #             self.bin_pixels_idx[bin_idx + delta] = np.concatenate( \
-        #                 (self.bin_pixels_idx[bin_idx], self.bin_pixels_idx[bin_idx + delta]), axis = 1)
-        #             break
-        #
-        #         delta += 1
+
 
         # This part will be uncommented after each bin has been optimized (purified)
         # # try to build an visual imagery reconstruct the image using the rectified bin
@@ -182,6 +151,71 @@ class Agent(object):
             self.pirouette_step_n = 0
             return [1, 0]
 
+    def canStop(self):
+
+    def simpleClustering(self, obs_visual_h):
+
+        # initialize bin(pixel_idx, size, color)
+        self.initializeClusters(obs_visual_h)
+
+        old_visual = obs_visual_h
+        old_centers =
+        p_c4xy = self.initialize_p_c4xy(old_visual)
+        p_k4c = self.initialize_p_k4c()
+        p_c4k = self.initialize_p_c4k()
+        while True:
+
+            p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
+            p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
+
+            new_visual = self.updateVisual(p_c4xy)
+
+
+
+    def initializeClusters(self, obs_visual_h):
+
+        # initialize bin(pixel_idx, sizes)
+        self.bin_pixels_idx = []
+        bin_labels = np.digitize(obs_visual_h, self.bin_edges)
+        for bin_id in range(self.n_bins):
+            self.bin_pixels_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
+            self.bin_sizes[bin_id] = self.bin_pixels_idx[bin_id].shape[1]
+
+        # update bin(pixel_idx, sizes): merge small bins into large bins
+        for bin_id in range(self.n_bins):
+            if self.bin_sizes[bin_id] > Agent.bin_size_limit \
+                    or (bin_id in self.predefined_colors_bins.values()):
+                continue
+
+            delta = 1
+            while True:
+                bin_id_tmp = (bin_id - delta) % self.n_bins
+                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                        or (bin_id in self.predefined_colors_bins.values()):
+                    self.bin_sizes[bin_id - delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id] = 0
+                    self.bin_pixels_idx[bin_id - delta] = np.concatenate( \
+                        (self.bin_pixels_idx[bin_id], self.bin_pixels_idx[bin_id - delta]), axis=1)
+                    break
+
+                bin_id_tmp = (bin_id + delta) % self.n_bins
+                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                        or (bin_id in self.predefined_colors_bins.values()):
+                    self.bin_sizes[bin_id + delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id] = 0
+                    self.bin_pixels_idx[bin_id + delta] = np.concatenate( \
+                        (self.bin_pixels_idx[bin_id], self.bin_pixels_idx[bin_id + delta]), axis=1)
+                    break
+
+                delta += 1
+
+        # update bin(color)
+        for bin_id in range(self.n_bins):
+            if 0 == self.bin_sizes[bin_id]:
+                self.bin_colors[bin_id] = (self.bin_edges[bin_id] + self.bin_edges[bin_id + 1]) / 2
+            else:
+                self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixels_idx[bin_id - 1])].mean(axis=0)
+
     @staticmethod
     def toHue(rgb):
         out_h = np.zeros(rgb.shape[:-1])
@@ -213,3 +247,5 @@ class Agent(object):
         out_h[np.isnan(out_h)] = 0
 
         return out_h
+
+
