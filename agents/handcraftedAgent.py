@@ -16,7 +16,10 @@ class Agent(object):
     default_test_length = 1000
     resolution = 84
 
+    # TODO these two parameters need to be tuned
+    # for the clustering to work properly
     bin_size_limit = 10
+    gradient_limit = 0.1
 
     def __init__(self):
         """
@@ -39,7 +42,9 @@ class Agent(object):
         self.predefined_colors_bins = {"green": np.digitize(Agent.predfined_colors_h.get("green"), self.bin_edges)}
 
         self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
-        self.bin_pixels_idx = []
+        self.bin_pixel_idx = None
+        self.nonempty_bin_idx = None
+        self.nonempty_bin_colors = None
 
 
     def reset(self, t=250):
@@ -151,35 +156,42 @@ class Agent(object):
             self.pirouette_step_n = 0
             return [1, 0]
 
-    def canStop(self):
-
     def simpleClustering(self, obs_visual_h):
 
         # initialize bin(pixel_idx, size, color)
         self.initializeClusters(obs_visual_h)
 
         old_visual = obs_visual_h
-        old_centers =
-        p_c4xy = self.initialize_p_c4xy(old_visual)
-        p_k4c = self.initialize_p_k4c()
-        p_c4k = self.initialize_p_c4k()
+        old_centers = self.nonempty_bin_colors
+        p_c4xy = self.computePc4xy(old_visual)
+        p_k4c = self.computePk4c(old_centers)
+        p_c4k = self.computePc4k(old_centers)
         while True:
 
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
             new_visual = self.updateVisual(p_c4xy)
+            new_centers = self.updateCenters(p_k4xy)
 
+            if self.canStop(old_visual, old_centers, new_visual, new_centers):
+                break
 
+            p_c4xy = self.computePc4xy(old_visual)
+            p_k4c = self.computePk4c(old_centers)
+            p_c4k = self.computePc4k(old_centers)
+
+        self.initializeClusters(new_visual)
+        return new_visual
 
     def initializeClusters(self, obs_visual_h):
 
         # initialize bin(pixel_idx, sizes)
-        self.bin_pixels_idx = []
+        self.bin_pixel_idx = []
         bin_labels = np.digitize(obs_visual_h, self.bin_edges)
         for bin_id in range(self.n_bins):
-            self.bin_pixels_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
-            self.bin_sizes[bin_id] = self.bin_pixels_idx[bin_id].shape[1]
+            self.bin_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
+            self.bin_sizes[bin_id] = self.bin_pixel_idx[bin_id].shape[1]
 
         # update bin(pixel_idx, sizes): merge small bins into large bins
         for bin_id in range(self.n_bins):
@@ -194,8 +206,8 @@ class Agent(object):
                         or (bin_id in self.predefined_colors_bins.values()):
                     self.bin_sizes[bin_id - delta] += self.bin_sizes[bin_id]
                     self.bin_sizes[bin_id] = 0
-                    self.bin_pixels_idx[bin_id - delta] = np.concatenate( \
-                        (self.bin_pixels_idx[bin_id], self.bin_pixels_idx[bin_id - delta]), axis=1)
+                    self.bin_pixel_idx[bin_id - delta] = np.concatenate( \
+                        (self.bin_pixel_idx[bin_id], self.bin_pixel_idx[bin_id - delta]), axis=1)
                     break
 
                 bin_id_tmp = (bin_id + delta) % self.n_bins
@@ -203,8 +215,8 @@ class Agent(object):
                         or (bin_id in self.predefined_colors_bins.values()):
                     self.bin_sizes[bin_id + delta] += self.bin_sizes[bin_id]
                     self.bin_sizes[bin_id] = 0
-                    self.bin_pixels_idx[bin_id + delta] = np.concatenate( \
-                        (self.bin_pixels_idx[bin_id], self.bin_pixels_idx[bin_id + delta]), axis=1)
+                    self.bin_pixel_idx[bin_id + delta] = np.concatenate( \
+                        (self.bin_pixel_idx[bin_id], self.bin_pixel_idx[bin_id + delta]), axis=1)
                     break
 
                 delta += 1
@@ -214,7 +226,31 @@ class Agent(object):
             if 0 == self.bin_sizes[bin_id]:
                 self.bin_colors[bin_id] = (self.bin_edges[bin_id] + self.bin_edges[bin_id + 1]) / 2
             else:
-                self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixels_idx[bin_id - 1])].mean(axis=0)
+                self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixel_idx[bin_id - 1])].mean(axis=0)
+
+        self.nonempty_bin_idx = np.where(self.bin_sizes != 0)
+        self.nonempty_bin_colors = self.bin_colors(self.nonempty_bin_idx)
+
+    def computePc4xy(self, visual):
+        neighbor_idx = self.findNeighbors(visual)
+
+    # The ways to define the neighborhood of a pixel matters
+    # because it can change the shape of connected component
+    # as iteration goes.
+    # For now, let's use the simplest one of a neighborhood
+    # of size 1 according to the gradient_limit.
+    # If the smallest gradient from a pixel is greater than
+    # the limit, then the neighborhood includes only itself,
+    # otherwise, it includes only the most similiar adjacient
+    # pixel. I don't know if it's correct, but intuitively
+    # it is what I want.
+    def findSimiliarNeighbors(self, visual):
+
+
+
+    def canStop(self, old_visual, old_centers, new_visual, new_centers):
+        print("old_centers: {}, new_centers: {}",format(old_centers, new_centers))
+        return (old_visual == new_visual).all() and (old_centers == new_centers).all()
 
     @staticmethod
     def toHue(rgb):
