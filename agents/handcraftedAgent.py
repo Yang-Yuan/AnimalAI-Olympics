@@ -275,7 +275,7 @@ class Agent(object):
                                             4: ([ii - 1], [jj - 1]), \
                                             5: ([ii + 1], [jj + 1]), \
                                             6: ([ii - 1], [jj + 1]), \
-                                            7: ([ii + 1], [jj - 1])}[mins[ii, jj]]
+                                            7: ([ii + 1], [jj - 1])}[min_idx[ii, jj]]
 
         return neighbor_idx
 
