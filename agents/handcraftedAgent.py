@@ -21,6 +21,12 @@ class Agent(object):
     bin_size_limit = 10
     gradient_limit = 0.075
 
+    n_bins = 30
+    bin_edges = np.linspace(start=0, stop=1, num=n_bins + 1)
+    bin_length = 1 / n_bins
+    bin_centers = (bin_edges[: -1] + bin_edges[1:]) / 2
+    predefined_colors_bins = {"green": np.digitize(predfined_colors_h.get("green"), bin_edges)}
+
     def __init__(self):
         """
          Load your agent here and initialize anything needed
@@ -34,19 +40,12 @@ class Agent(object):
         self.target_size_old = None
         self.visual_memory = None
 
-        self.n_bins = 30
-        self.bin_edges = np.linspace(start=0, stop=1, num=self.n_bins + 1)
-        self.bin_length = 1 / self.n_bins
-        self.bin_center = (self.bin_edges[: -1] + self.bin_edges[1 :]) / 2
-        self.bin_sizes = np.zeros(self.n_bins, dtype = np.int)
-        self.bin_colors = np.zeros(self.n_bins)
-        self.predefined_colors_bins = {"green": np.digitize(Agent.predfined_colors_h.get("green"), self.bin_edges)}
-
         self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
         self.bin_pixel_idx = None
         self.nonempty_bin_idx = None
         self.nonempty_bin_colors = None
-
+        self.bin_colors = np.zeros(Agent.n_bins)
+        self.bin_sizes = np.zeros(Agent.n_bins, dtype=np.int)
 
     def reset(self, t=250):
         """
@@ -163,24 +162,22 @@ class Agent(object):
         self.initializeClusters(obs_visual_h)
 
         old_visual = obs_visual_h
-        old_centers = self.nonempty_bin_colors
-        p_c4xy = self.computePc4xy(old_visual)
-        p_k4c = self.computePk4c(old_centers)
-        p_c4k = self.computePc4k(old_centers)
+        old_cluster_centers = self.nonempty_bin_colors
+        p_c4xy = Agent.computePc4xy(old_visual)
+        p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
         while True:
 
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
             new_visual = self.updateVisual(p_c4xy)
-            new_centers = self.updateCenters(p_k4xy)
+            new_cluster_centers = self.updateCenters(p_k4xy)
 
-            if self.canStop(old_visual, old_centers, new_visual, new_centers):
+            if self.canStop(old_visual, old_cluster_centers, new_visual, new_cluster_centers):
                 break
 
-            p_c4xy = self.computePc4xy(old_visual)
-            p_k4c = self.computePk4c(old_centers)
-            p_c4k = self.computePc4k(old_centers)
+            p_c4xy = Agent.computePc4xy(old_visual)
+            p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
 
         self.initializeClusters(new_visual)
         return new_visual
@@ -225,20 +222,21 @@ class Agent(object):
         # update bin(color)
         for bin_id in range(self.n_bins):
             if 0 == self.bin_sizes[bin_id]:
-                self.bin_colors[bin_id] = self.bin_center[bin_id]
+                self.bin_colors[bin_id] = self.bin_centers[bin_id]
             else:
                 self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixel_idx[bin_id - 1])].mean(axis=0)
 
         self.nonempty_bin_idx = np.where(self.bin_sizes != 0)
         self.nonempty_bin_colors = self.bin_colors[self.nonempty_bin_idx]
 
-    def computePc4xy(self, visual):
+    @staticmethod
+    def computePc4xy(visual):
         neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
         neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
 
-        cluster_colors_visual = np.empty(self.nonempty_bin_colors.shape + visual.shape, dtype = float)
-        for ii in range(len(self.nonempty_bin_colors)):
-            cluster_colors_visual[ii] = np.full(neighbor_mean_visual.shape, self.nonempty_bin_colors[ii])
+        cluster_colors_visual = np.empty(Agent.bin_centers.shape + visual.shape, dtype = float)
+        for ii in range(len(Agent.bin_centers)):
+            cluster_colors_visual[ii] = np.full(neighbor_mean_visual.shape, Agent.bin_centers[ii])
 
         cluster_colors_diffs = abs(cluster_colors_visual - neighbor_mean_visual)
         old_settings = np.seterr(invalid='ignore')
@@ -248,6 +246,29 @@ class Agent(object):
         np.seterr(**old_settings)
 
         return p_c4xy
+
+    @staticmethod
+    def computePk4cAndPc4k(cluster_centers):
+        cluster_colors_spectrum = np.empty(cluster_centers.shape + Agent.bin_centers.shape, dtype = float)
+        for ii in range(len(cluster_centers)):
+            cluster_colors_spectrum[ii] = np.full(Agent.bin_centers.shape, cluster_centers[ii])
+
+        cluster_colors_diffs = abs(cluster_colors_spectrum - Agent.bin_centers)
+
+        old_settings = np.seterr(invalid='ignore')
+
+        distance_k2c = 1 / cluster_colors_diffs
+        distance_c2k = distance_k2c.transpose()
+
+        p_k4c = distance_k2c / distance_k2c.sum(axis = 0)
+        p_k4c[np.isnan(p_k4c)] = 1
+
+        p_c4k = distance_c2k / distance_c2k.sum(axis = 0)
+        p_c4k[np.isnan(p_k4c)] = 1
+
+        np.seterr(**old_settings)
+
+        return p_k4c, p_c4k
 
     @staticmethod
     def calculateMeanVisual(visual, idx):
@@ -309,8 +330,12 @@ class Agent(object):
         return neighbor_idx
 
     @staticmethod
+    def updateVisual(p_c4xy):
+        pass
+
+    @staticmethod
     def canStop(self, old_visual, old_centers, new_visual, new_centers):
-        print("old_centers: {}, new_centers: {}",format(old_centers, new_centers))
+        print("old_centers: {}, new_centers: {}", format(old_centers, new_centers))
         return (old_visual == new_visual).all() and (old_centers == new_centers).all()
 
     @staticmethod
