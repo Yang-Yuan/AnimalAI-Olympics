@@ -19,7 +19,7 @@ class Agent(object):
     # TODO these two parameters need to be tuned
     # for the clustering to work properly
     bin_size_limit = 10
-    gradient_limit = 0.1
+    gradient_limit = 0.075
 
     def __init__(self):
         """
@@ -37,6 +37,7 @@ class Agent(object):
         self.n_bins = 30
         self.bin_edges = np.linspace(start=0, stop=1, num=self.n_bins + 1)
         self.bin_length = 1 / self.n_bins
+        self.bin_center = (self.bin_edges[: -1] + self.bin_edges[1 :]) / 2
         self.bin_sizes = np.zeros(self.n_bins, dtype = np.int)
         self.bin_colors = np.zeros(self.n_bins)
         self.predefined_colors_bins = {"green": np.digitize(Agent.predfined_colors_h.get("green"), self.bin_edges)}
@@ -224,27 +225,55 @@ class Agent(object):
         # update bin(color)
         for bin_id in range(self.n_bins):
             if 0 == self.bin_sizes[bin_id]:
-                self.bin_colors[bin_id] = (self.bin_edges[bin_id] + self.bin_edges[bin_id + 1]) / 2
+                self.bin_colors[bin_id] = self.bin_center[bin_id]
             else:
                 self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixel_idx[bin_id - 1])].mean(axis=0)
 
         self.nonempty_bin_idx = np.where(self.bin_sizes != 0)
-        self.nonempty_bin_colors = self.bin_colors(self.nonempty_bin_idx)
+        self.nonempty_bin_colors = self.bin_colors[self.nonempty_bin_idx]
 
     def computePc4xy(self, visual):
-        neighbor_idx = self.findNeighbors(visual)
+        neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
+        neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
 
-    # The ways to define the neighborhood of a pixel matters
-    # because it can change the shape of connected component
-    # as iteration goes.
-    # For now, let's use the simplest one of a neighborhood
-    # of size 1 according to the gradient_limit.
-    # If the smallest gradient from a pixel is greater than
-    # the limit, then the neighborhood includes only itself,
-    # otherwise, it includes only the most similiar adjacent
-    # pixel. I don't know if it's correct, but intuitively
-    # it is what I want.
-    def findSimiliarNeighbors(self, visual):
+        cluster_colors_visual = np.empty(self.nonempty_bin_colors.shape + visual.shape, dtype = float)
+        for ii in range(len(self.nonempty_bin_colors)):
+            cluster_colors_visual[ii] = np.full(neighbor_mean_visual.shape, self.nonempty_bin_colors[ii])
+
+        cluster_colors_diffs = abs(cluster_colors_visual - neighbor_mean_visual)
+        old_settings = np.seterr(invalid='ignore')
+        p_c4xy = 1 / cluster_colors_diffs
+        p_c4xy = p_c4xy / p_c4xy.sum(axis = 0)
+        p_c4xy[np.isnan(p_c4xy)] = 1
+        np.seterr(**old_settings)
+
+        return p_c4xy
+
+    @staticmethod
+    def calculateMeanVisual(visual, idx):
+        new_visual = np.zeros_like(visual)
+        for ii in range(new_visual.shape[0]):
+            for jj in range(new_visual.shape[1]):
+                new_visual[ii, jj] = visual[idx[ii, jj]].mean()
+        return new_visual
+
+    @staticmethod
+    def truncatedMinimalNeighbors(visual, t):
+        """
+        The ways to define the neighborhood of a pixel matters
+        because it can change the shape of connected component
+        as iteration goes.
+        For now, let's use the simplest one of a neighborhood
+        of size 1 according to the gradient_limit.
+        If the smallest gradient from a pixel is greater than
+        the limit, then the neighborhood includes only itself,
+        otherwise, it includes only the most similiar adjacent
+        pixel. I don't know if it's correct, but intuitively
+        it is what I want.
+        :param t: neighbors with similarity below t will be excluded from the neighborhood of a pixel.
+        :param visual: visual
+        :return: neighbor_idx: the idx of the neighbors of each pixel in visual
+        """
 
         padded_visual = np.pad(visual, pad_width = (1, 1), mode = 'constant', constant_values = (np.inf, np.inf))
 
@@ -265,7 +294,7 @@ class Agent(object):
         neighbor_idx = np.empty_like(mins, dtype = tuple)
         for ii in range(mins.shape[0]):
             for jj in range(mins.shape[1]):
-                if mins[ii, jj] < Agent.gradient_limit:
+                if mins[ii, jj] < t:
                     neighbor_idx[ii, jj] = ([ii], [jj])
                 else:
                     neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]), \
@@ -279,7 +308,7 @@ class Agent(object):
 
         return neighbor_idx
 
-
+    @staticmethod
     def canStop(self, old_visual, old_centers, new_visual, new_centers):
         print("old_centers: {}, new_centers: {}",format(old_centers, new_centers))
         return (old_visual == new_visual).all() and (old_centers == new_centers).all()
