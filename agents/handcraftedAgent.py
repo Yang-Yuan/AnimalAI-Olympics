@@ -241,11 +241,43 @@ class Agent(object):
     # of size 1 according to the gradient_limit.
     # If the smallest gradient from a pixel is greater than
     # the limit, then the neighborhood includes only itself,
-    # otherwise, it includes only the most similiar adjacient
+    # otherwise, it includes only the most similiar adjacent
     # pixel. I don't know if it's correct, but intuitively
     # it is what I want.
     def findSimiliarNeighbors(self, visual):
 
+        padded_visual = np.pad(visual, pad_width = (1, 1), mode = 'constant', constant_values = (np.inf, np.inf))
+
+        # for 8 neighbors of each pixel, calculate the abs(diff)
+        diffs = np.zeros(visual.shape + (8,))
+        diffs[:, :, 0] = abs(padded_visual[: -2, 1 : -1] - visual) # up
+        diffs[:, :, 1] = abs(padded_visual[2 :, 1 : -1] - visual) # down
+        diffs[:, :, 2] = abs(padded_visual[1 : -1, : -2] - visual) # left
+        diffs[:, :, 3] = abs(padded_visual[1 : -1, 2 :] - visual) # right
+        diffs[:, :, 4] = abs(padded_visual[: -2, : -2] - visual) # up_left
+        diffs[:, :, 5] = abs(padded_visual[2:, 2:] - visual) # down_right
+        diffs[:, :, 6] = abs(padded_visual[: -2, 2:] - visual) # up_right
+        diffs[:, :, 7] = abs(padded_visual[2:, : -2] - visual) # down_left
+
+        min_idx = diffs.argmin(axis = 2)
+        X, Y = np.meshgrid(np.arange(visual.shape[0]), np.arange(visual.shape[1]), indexing = 'ij')
+        mins = diffs[(X, Y, min_idx)]
+        neighbor_idx = np.empty_like(mins, dtype = tuple)
+        for ii in range(mins.shape[0]):
+            for jj in range(mins.shape[1]):
+                if mins[ii, jj] < Agent.gradient_limit:
+                    neighbor_idx[ii, jj] = ([ii], [jj])
+                else:
+                    neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]), \
+                                            1: ([ii + 1], [jj]), \
+                                            2: ([ii], [jj - 1]), \
+                                            3: ([ii], [jj + 1]), \
+                                            4: ([ii - 1], [jj - 1]), \
+                                            5: ([ii + 1], [jj + 1]), \
+                                            6: ([ii - 1], [jj + 1]), \
+                                            7: ([ii + 1], [jj - 1])}[mins[ii, jj]]
+
+        return neighbor_idx
 
 
     def canStop(self, old_visual, old_centers, new_visual, new_centers):
