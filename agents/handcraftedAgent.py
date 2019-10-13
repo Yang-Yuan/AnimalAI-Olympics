@@ -229,6 +229,11 @@ class Agent(object):
 
     @staticmethod
     def computePc4xy(visual):
+        # these two functions are actually constitutes a smoothing filter,
+        # therefore, theoretically, any smoothing filter can be applied here.
+        # Even any other filter can be applied here, maybe unexpected results
+        # can be found throught different filters, as the probability of colors
+        # move following different patterns induced by different filters.
         neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
         neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
 
@@ -304,14 +309,14 @@ class Agent(object):
                 if mins[ii, jj] < t:
                     neighbor_idx[ii, jj] = ([ii], [jj])
                 else:
-                    neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]),
-                                            1: ([ii + 1], [jj]),
-                                            2: ([ii], [jj - 1]),
-                                            3: ([ii], [jj + 1]),
-                                            4: ([ii - 1], [jj - 1]),
-                                            5: ([ii + 1], [jj + 1]),
-                                            6: ([ii - 1], [jj + 1]),
-                                            7: ([ii + 1], [jj - 1])}[min_idx[ii, jj]]
+                    neighbor_idx[ii, jj] = {0: ([ii, ii - 1], [jj, jj]),
+                                            1: ([ii, ii + 1], [jj, jj]),
+                                            2: ([ii, ii], [jj, jj - 1]),
+                                            3: ([ii, ii], [jj, jj + 1]),
+                                            4: ([ii, ii - 1], [jj, jj - 1]),
+                                            5: ([ii, ii + 1], [jj, jj + 1]),
+                                            6: ([ii, ii - 1], [jj, jj + 1]),
+                                            7: ([ii, ii + 1], [jj, jj - 1])}[min_idx[ii, jj]]
 
         return neighbor_idx
 
