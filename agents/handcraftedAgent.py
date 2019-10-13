@@ -215,7 +215,8 @@ class Agent(object):
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
             new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
-            new_cluster_centers = np.tensordot(p_k4xy, visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
+            new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
+            # TODO there might be some numerical error here that new_cluster_centers wiil go beyond [0, 1]
 
             if Agent.canStop(old_visual, old_cluster_centers, new_visual, new_cluster_centers):
                 break
@@ -268,7 +269,7 @@ class Agent(object):
         p_k4c[np.isnan(p_k4c)] = 1
 
         p_c4k = distance_c2k / distance_c2k.sum(axis = 0)
-        p_c4k[np.isnan(p_k4c)] = 1
+        p_c4k[np.isnan(p_c4k)] = 1
 
         np.seterr(**old_settings)
 
@@ -307,7 +308,7 @@ class Agent(object):
         neighbor_idx = np.empty_like(mins, dtype = tuple)
         for ii in range(mins.shape[0]):
             for jj in range(mins.shape[1]):
-                if mins[ii, jj] < t:
+                if mins[ii, jj] > t:
                     neighbor_idx[ii, jj] = ([ii], [jj])
                 else:
                     neighbor_idx[ii, jj] = {0: ([ii, ii - 1], [jj, jj]),
@@ -323,7 +324,7 @@ class Agent(object):
 
     @staticmethod
     def canStop(old_visual, old_centers, new_visual, new_centers):
-        print("old_centers: {}, new_centers: {}", format(old_centers, new_centers))
+        print("old_centers: {}, new_centers: {}".format(old_centers, new_centers))
         return np.all(old_visual == new_visual) and np.all(old_centers == new_centers)
 
     @staticmethod
