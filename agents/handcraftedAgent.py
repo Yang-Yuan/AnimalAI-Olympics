@@ -19,7 +19,7 @@ class Agent(object):
     # TODO these two parameters need to be tuned
     # for the clustering to work properly
     bin_size_limit = 10
-    gradient_limit = 0.075
+    gradient_limit = 0.03
 
     n_bins = 30
     bin_edges = np.linspace(start=0, stop=1, num=n_bins + 1)
@@ -214,7 +214,8 @@ class Agent(object):
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
-            new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
+            # new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
+            new_visual = Agent.bin_centers[p_c4xy.argmax(axis = 0)]
             new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
             # TODO there might be some numerical error here that new_cluster_centers wiil go beyond [0, 1]
 
