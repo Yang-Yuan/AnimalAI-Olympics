@@ -254,8 +254,8 @@ class Agent(object):
         # can be found throught different filters, as the probability of colors
         # move following different patterns induced by different filters.
 
-        # neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
-        neighbor_mean_visual = Agent.calculateMeanVisual(visual, Agent.four_neighbor_idx)
+        neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
+        neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
 
         cluster_colors_visual = np.empty(Agent.bin_centers.shape + visual.shape, dtype = float)
         for ii in range(len(Agent.bin_centers)):
