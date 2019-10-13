@@ -41,11 +41,13 @@ class Agent(object):
         self.visual_memory = None
 
         self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
-        self.bin_pixel_idx = None
-        self.nonempty_bin_idx = None
-        self.nonempty_bin_colors = None
-        self.bin_colors = np.zeros(Agent.n_bins)
-        self.bin_sizes = np.zeros(Agent.n_bins, dtype=np.int)
+
+        self.cluster_pixel_idx = None
+        self.cluster_bin_idx = None
+        self.cluster_centers = None
+        self.cluster_sizes = None
+        # cluster_size here doesn't have to be a class variable. Actually, it is bin_sizes.
+        # It is for plotting the histogram.
 
     def reset(self, t=250):
         """
@@ -77,7 +79,7 @@ class Agent(object):
         if done:
             return [0, 0]
 
-        # Jaja, magic code!
+        # magic code!
         if self.pirouette_step_n > 70:
             self.pirouette_step_n = 0
             return [1, 0]
@@ -85,12 +87,13 @@ class Agent(object):
         obs_visual, obs_vector = obs
         obs_visual_h = Agent.toHue(obs_visual)
 
+        self.histogramize(obs_visual_h)
+        obs_visual_h_purified = Agent.bispaceClustering(obs_visual_h, self.cluster_centers)
 
         # rectify bins so that the pixels in each bin are not only close in color but also constitute one or more
         # connected areas
         # In other words, I don't allow these boundary points to be a single bin;
         # they must affiliate to some object-level bins.
-
 
         # This part will be uncommented after each bin has been optimized (purified)
         # # try to build an visual imagery reconstruct the image using the rectified bin
@@ -101,9 +104,8 @@ class Agent(object):
         # if (self.visual_imagery == -1).any():
         #     raise Exception("You missed some pixel, idiot!")
 
-        diff_green = abs(obs_visual_h - Agent.predfined_colors_h.get("green"))
+        diff_green = abs(obs_visual_h_purified - Agent.predfined_colors_h.get("green"))
         is_green = diff_green < Agent.color_diff_limit
-
 
         # self.visual_memory[self.step_n] = is_green
         self.step_n += 1
@@ -156,13 +158,54 @@ class Agent(object):
             self.pirouette_step_n = 0
             return [1, 0]
 
-    def simpleClustering(self, obs_visual_h):
+    def histogramize(self, obs_visual_h):
 
-        # initialize bin(pixel_idx, size, color)
-        self.initializeClusters(obs_visual_h)
+        # initialize bin(pixel_idx, sizes)
+        self.cluster_pixel_idx = []
+        self.cluster_sizes = np.zeros(Agent.n_bins)
+        bin_labels = np.digitize(obs_visual_h, Agent.bin_edges)
+        for bin_id in range(Agent.n_bins):
+            self.cluster_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
+            self.cluster_sizes[bin_id] = self.cluster_pixel_idx[bin_id].shape[1]
 
-        old_visual = obs_visual_h
-        old_cluster_centers = self.nonempty_bin_colors
+        # update bin(pixel_idx, sizes): merge small bins into large bins
+        for bin_id in range(self.n_bins):
+            if self.cluster_sizes[bin_id] > Agent.bin_size_limit \
+                    or (bin_id in self.predefined_colors_bins.values()):
+                continue
+
+            delta = 1
+            while True:
+                bin_id_tmp = (bin_id - delta) % self.n_bins
+                if self.cluster_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                        or (bin_id in self.predefined_colors_bins.values()):
+                    self.cluster_sizes[bin_id - delta] += self.cluster_sizes[bin_id]
+                    self.cluster_sizes[bin_id] = 0
+                    self.cluster_pixel_idx[bin_id - delta] = np.concatenate(
+                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id - delta]), axis=1)
+                    break
+
+                bin_id_tmp = (bin_id + delta) % self.n_bins
+                if self.cluster_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                        or (bin_id in self.predefined_colors_bins.values()):
+                    self.cluster_sizes[bin_id + delta] += self.cluster_sizes[bin_id]
+                    self.cluster_sizes[bin_id] = 0
+                    self.cluster_pixel_idx[bin_id + delta] = np.concatenate(
+                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id + delta]), axis=1)
+                    break
+
+                delta += 1
+
+        self.cluster_pixel_idx = self.cluster_pixel_idx[0 != self.cluster_sizes]
+        self.cluster_centers = np.zeros(len(self.cluster_pixel_idx), dtype = float)
+        for cluster_id in range(len(self.cluster_centers)):
+            self.cluster_centers[cluster_id] = obs_visual_h[tuple(self.cluster_pixel_idx[cluster_id])].mean(axis=0)
+
+    @staticmethod
+    def bispaceClustering(visual, cluster_centers):
+
+        old_visual = visual
+        old_cluster_centers = cluster_centers
         p_c4xy = Agent.computePc4xy(old_visual)
         p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
         while True:
@@ -170,64 +213,19 @@ class Agent(object):
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
-            new_visual = self.updateVisual(p_c4xy)
-            new_cluster_centers = self.updateCenters(p_k4xy)
+            new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
+            new_cluster_centers = np.tensordot(p_k4xy, visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
 
-            if self.canStop(old_visual, old_cluster_centers, new_visual, new_cluster_centers):
+            if Agent.canStop(old_visual, old_cluster_centers, new_visual, new_cluster_centers):
                 break
+            else:
+                old_visual = new_visual
+                old_cluster_centers = new_cluster_centers
 
             p_c4xy = Agent.computePc4xy(old_visual)
             p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
 
-        self.initializeClusters(new_visual)
         return new_visual
-
-    def initializeClusters(self, obs_visual_h):
-
-        # initialize bin(pixel_idx, sizes)
-        self.bin_pixel_idx = []
-        bin_labels = np.digitize(obs_visual_h, self.bin_edges)
-        for bin_id in range(self.n_bins):
-            self.bin_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
-            self.bin_sizes[bin_id] = self.bin_pixel_idx[bin_id].shape[1]
-
-        # update bin(pixel_idx, sizes): merge small bins into large bins
-        for bin_id in range(self.n_bins):
-            if self.bin_sizes[bin_id] > Agent.bin_size_limit \
-                    or (bin_id in self.predefined_colors_bins.values()):
-                continue
-
-            delta = 1
-            while True:
-                bin_id_tmp = (bin_id - delta) % self.n_bins
-                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
-                        or (bin_id in self.predefined_colors_bins.values()):
-                    self.bin_sizes[bin_id - delta] += self.bin_sizes[bin_id]
-                    self.bin_sizes[bin_id] = 0
-                    self.bin_pixel_idx[bin_id - delta] = np.concatenate( \
-                        (self.bin_pixel_idx[bin_id], self.bin_pixel_idx[bin_id - delta]), axis=1)
-                    break
-
-                bin_id_tmp = (bin_id + delta) % self.n_bins
-                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
-                        or (bin_id in self.predefined_colors_bins.values()):
-                    self.bin_sizes[bin_id + delta] += self.bin_sizes[bin_id]
-                    self.bin_sizes[bin_id] = 0
-                    self.bin_pixel_idx[bin_id + delta] = np.concatenate( \
-                        (self.bin_pixel_idx[bin_id], self.bin_pixel_idx[bin_id + delta]), axis=1)
-                    break
-
-                delta += 1
-
-        # update bin(color)
-        for bin_id in range(self.n_bins):
-            if 0 == self.bin_sizes[bin_id]:
-                self.bin_colors[bin_id] = self.bin_centers[bin_id]
-            else:
-                self.bin_colors[bin_id] = obs_visual_h[tuple(self.bin_pixel_idx[bin_id - 1])].mean(axis=0)
-
-        self.nonempty_bin_idx = np.where(self.bin_sizes != 0)
-        self.nonempty_bin_colors = self.bin_colors[self.nonempty_bin_idx]
 
     @staticmethod
     def computePc4xy(visual):
@@ -281,19 +279,7 @@ class Agent(object):
     @staticmethod
     def truncatedMinimalNeighbors(visual, t):
         """
-        The ways to define the neighborhood of a pixel matters
-        because it can change the shape of connected component
-        as iteration goes.
-        For now, let's use the simplest one of a neighborhood
-        of size 1 according to the gradient_limit.
-        If the smallest gradient from a pixel is greater than
-        the limit, then the neighborhood includes only itself,
-        otherwise, it includes only the most similiar adjacent
-        pixel. I don't know if it's correct, but intuitively
-        it is what I want.
-        :param t: neighbors with similarity below t will be excluded from the neighborhood of a pixel.
-        :param visual: visual
-        :return: neighbor_idx: the idx of the neighbors of each pixel in visual
+        TODO try other neighborhood definitions
         """
 
         padded_visual = np.pad(visual, pad_width = (1, 1), mode = 'constant', constant_values = (np.inf, np.inf))
@@ -318,25 +304,21 @@ class Agent(object):
                 if mins[ii, jj] < t:
                     neighbor_idx[ii, jj] = ([ii], [jj])
                 else:
-                    neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]), \
-                                            1: ([ii + 1], [jj]), \
-                                            2: ([ii], [jj - 1]), \
-                                            3: ([ii], [jj + 1]), \
-                                            4: ([ii - 1], [jj - 1]), \
-                                            5: ([ii + 1], [jj + 1]), \
-                                            6: ([ii - 1], [jj + 1]), \
+                    neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]),
+                                            1: ([ii + 1], [jj]),
+                                            2: ([ii], [jj - 1]),
+                                            3: ([ii], [jj + 1]),
+                                            4: ([ii - 1], [jj - 1]),
+                                            5: ([ii + 1], [jj + 1]),
+                                            6: ([ii - 1], [jj + 1]),
                                             7: ([ii + 1], [jj - 1])}[min_idx[ii, jj]]
 
         return neighbor_idx
 
     @staticmethod
-    def updateVisual(p_c4xy):
-        pass
-
-    @staticmethod
-    def canStop(self, old_visual, old_centers, new_visual, new_centers):
+    def canStop(old_visual, old_centers, new_visual, new_centers):
         print("old_centers: {}, new_centers: {}", format(old_centers, new_centers))
-        return (old_visual == new_visual).all() and (old_centers == new_centers).all()
+        return np.all(old_visual == new_visual) and np.all(old_centers == new_centers)
 
     @staticmethod
     def toHue(rgb):
@@ -359,7 +341,7 @@ class Agent(object):
         idx = (rgb[:, :, 2] == out_v)
         out_h[idx] = 4. + (rgb[idx, 0] - rgb[idx, 1]) / delta[idx]
 
-        # normorlization
+        # normalization
         out_h = (out_h / 6.) % 1.
         out_h[delta == 0.] = 0.
 

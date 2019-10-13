@@ -119,7 +119,7 @@ for arenaConfig in arenaConfigs:
 
             # Visualization
             image.set_data(obs[0])
-            for bar, height, face_color, idx in zip(bars, agent.bin_sizes, agent.bin_colors, agent.bin_pixel_idx):
+            for bar, height, face_color, idx in zip(bars, agent.cluster_sizes, agent.bin_colors, agent.cluster_pixel_idx):
                 bar.set_height(height)
                 bar.set_facecolor(plt.cm.hsv(face_color))
                 # bar.set_facecolor(obs[0][tuple(idx)].mean(axis = 0))
