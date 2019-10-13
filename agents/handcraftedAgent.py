@@ -163,7 +163,7 @@ class Agent(object):
 
         # initialize bin(pixel_idx, sizes)
         self.cluster_pixel_idx = []
-        self.bin_sizes = np.zeros(Agent.n_bins)
+        self.bin_sizes = np.zeros(Agent.n_bins, dtype = int)
         bin_labels = np.digitize(obs_visual_h, Agent.bin_edges)
         for bin_id in range(Agent.n_bins):
             self.cluster_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
@@ -180,24 +180,24 @@ class Agent(object):
                 bin_id_tmp = (bin_id - delta) % self.n_bins
                 if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
                         or (bin_id in self.predefined_colors_bins.values()):
-                    self.bin_sizes[bin_id - delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id_tmp] += self.bin_sizes[bin_id]
                     self.bin_sizes[bin_id] = 0
-                    self.cluster_pixel_idx[bin_id - delta] = np.concatenate(
-                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id - delta]), axis=1)
+                    self.cluster_pixel_idx[bin_id_tmp] = np.concatenate(
+                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id_tmp]), axis=1)
                     break
 
                 bin_id_tmp = (bin_id + delta) % self.n_bins
                 if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
                         or (bin_id in self.predefined_colors_bins.values()):
-                    self.bin_sizes[bin_id + delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id_tmp] += self.bin_sizes[bin_id]
                     self.bin_sizes[bin_id] = 0
-                    self.cluster_pixel_idx[bin_id + delta] = np.concatenate(
-                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id + delta]), axis=1)
+                    self.cluster_pixel_idx[bin_id_tmp] = np.concatenate(
+                        (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id_tmp]), axis=1)
                     break
 
                 delta += 1
 
-        self.cluster_pixel_idx = self.cluster_pixel_idx[0 != self.bin_sizes]
+        self.cluster_pixel_idx = [self.cluster_pixel_idx[ii] for ii in np.where(self.bin_sizes != 0)[0]]
         self.cluster_centers = np.zeros(len(self.cluster_pixel_idx), dtype = float)
         for cluster_id in range(len(self.cluster_centers)):
             self.cluster_centers[cluster_id] = obs_visual_h[tuple(self.cluster_pixel_idx[cluster_id])].mean(axis=0)

@@ -101,19 +101,6 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
-            # ax_tmp.imshow(obs[0])
-            # fig_tmp.savefig("tmp.png")
-            # seg = segmentation.felzenszwalb(color.rgb2hsv(obs[0]), scale = 500)
-            # seg = segmentation.slic(color.rgb2hsv(obs[0]))
-            # seg = segmentation.quickshift(color.rgb2hsv(obs[0]), ratio = 1, kernel_size = 100)
-            # image_tmp.set_data(segmentation.mark_boundaries(obs[0], seg))
-            # fig_tmp.canvas.draw()
-            # fig_tmp.canvas.flush_events()
-
-            # image.set_data(obs[0])
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
-
             action = agent.step(obs, reward, done, info)
 
             # Visualization
