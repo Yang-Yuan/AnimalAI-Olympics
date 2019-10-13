@@ -1,5 +1,7 @@
 import numpy as np
 from skimage import measure
+from matplotlib import pyplot as plt
+import neighbors
 
 
 class Agent(object):
@@ -27,6 +29,13 @@ class Agent(object):
     bin_centers = (bin_edges[: -1] + bin_edges[1:]) / 2
     predefined_colors_bins = {"green": np.digitize(predfined_colors_h.get("green"), bin_edges)}
 
+    plt.ion()
+    fig, ax = plt.subplots(ncols=1, nrows=1)
+    image = ax.imshow((np.zeros((84, 84, 3))))
+
+    four_neighbor_idx = neighbors.orthogonalNeighbors(4)
+    eight_neighbor_idx = neighbors.orthogonalNeighbors(8)
+
     def __init__(self):
         """
          Load your agent here and initialize anything needed
@@ -47,8 +56,6 @@ class Agent(object):
         self.cluster_centers = None
 
         self.bin_sizes = None
-        # cluster_size here doesn't have to be a class variable. Actually, it is bin_sizes.
-        # It is for plotting the histogram.
 
     def reset(self, t=250):
         """
@@ -211,11 +218,16 @@ class Agent(object):
         p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
         while True:
 
+            Agent.image.set_data(plt.cm.hsv(old_visual))
+            Agent.fig.canvas.draw()
+            Agent.fig.canvas.flush_events()
+
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
-            # new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
-            new_visual = Agent.bin_centers[p_c4xy.argmax(axis = 0)]
+            new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
+            # new_visual = Agent.bin_centers[p_c4xy.argmax(axis = 0)]
+            # new_visual = Agent.sampleNewVisual(p_c4xy)
             new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
             # TODO there might be some numerical error here that new_cluster_centers wiil go beyond [0, 1]
 
@@ -230,6 +242,10 @@ class Agent(object):
 
         return new_visual
 
+    # @staticmethod
+    # def sampleNewVisual(p_c4xy):
+
+
     @staticmethod
     def computePc4xy(visual):
         # these two functions are actually constitutes a smoothing filter,
@@ -237,19 +253,24 @@ class Agent(object):
         # Even any other filter can be applied here, maybe unexpected results
         # can be found throught different filters, as the probability of colors
         # move following different patterns induced by different filters.
-        neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
-        neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
+
+        # neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
+        neighbor_mean_visual = Agent.calculateMeanVisual(visual, Agent.four_neighbor_idx)
 
         cluster_colors_visual = np.empty(Agent.bin_centers.shape + visual.shape, dtype = float)
         for ii in range(len(Agent.bin_centers)):
             cluster_colors_visual[ii] = np.full(neighbor_mean_visual.shape, Agent.bin_centers[ii])
 
         cluster_colors_diffs = abs(cluster_colors_visual - neighbor_mean_visual)
+
         old_settings = np.seterr(invalid='ignore')
-        p_c4xy = 1 / cluster_colors_diffs
+        p_c4xy = np.exp(1 / cluster_colors_diffs)
         p_c4xy = p_c4xy / p_c4xy.sum(axis = 0)
         p_c4xy[np.isnan(p_c4xy)] = 1
         np.seterr(**old_settings)
+
+        # p_c4xy = np.exp(-cluster_colors_diffs)
+        # p_c4xy = p_c4xy / p_c4xy.sum(axis=0)
 
         return p_c4xy
 
@@ -262,17 +283,18 @@ class Agent(object):
         cluster_colors_diffs = abs(cluster_colors_spectrum - Agent.bin_centers)
 
         old_settings = np.seterr(invalid='ignore')
-
-        distance_k2c = 1 / cluster_colors_diffs
-        distance_c2k = distance_k2c.transpose()
-
-        p_k4c = distance_k2c / distance_k2c.sum(axis = 0)
+        p_k4c = np.exp(1 / cluster_colors_diffs)
+        p_c4k = p_k4c.transpose()
+        p_k4c = p_k4c / p_k4c.sum(axis = 0)
         p_k4c[np.isnan(p_k4c)] = 1
-
-        p_c4k = distance_c2k / distance_c2k.sum(axis = 0)
+        p_c4k = p_c4k / p_c4k.sum(axis = 0)
         p_c4k[np.isnan(p_c4k)] = 1
-
         np.seterr(**old_settings)
+
+        # p_k4c = np.exp(cluster_colors_diffs)
+        # p_c4k = p_k4c.transpose()
+        # p_k4c = p_k4c / p_k4c.sum(axis=0)
+        # p_c4k = p_c4k / p_c4k.sum(axis=0)
 
         return p_k4c, p_c4k
 
