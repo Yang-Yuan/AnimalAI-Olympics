@@ -297,9 +297,9 @@ class Agent(object):
         diffs[:, :, 2] = abs(padded_visual[1 : -1, : -2] - visual) # left
         diffs[:, :, 3] = abs(padded_visual[1 : -1, 2 :] - visual) # right
         diffs[:, :, 4] = abs(padded_visual[: -2, : -2] - visual) # up_left
-        diffs[:, :, 5] = abs(padded_visual[2:, 2:] - visual) # down_right
-        diffs[:, :, 6] = abs(padded_visual[: -2, 2:] - visual) # up_right
-        diffs[:, :, 7] = abs(padded_visual[2:, : -2] - visual) # down_left
+        diffs[:, :, 5] = abs(padded_visual[2 :, 2 :] - visual) # down_right
+        diffs[:, :, 6] = abs(padded_visual[: -2, 2 :] - visual) # up_right
+        diffs[:, :, 7] = abs(padded_visual[2 :, : -2] - visual) # down_left
 
         min_idx = diffs.argmin(axis = 2)
         X, Y = np.meshgrid(np.arange(visual.shape[0]), np.arange(visual.shape[1]), indexing = 'ij')
