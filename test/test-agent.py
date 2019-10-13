@@ -103,13 +103,6 @@ for arenaConfig in arenaConfigs:
 
             # ax_tmp.imshow(obs[0])
             # fig_tmp.savefig("tmp.png")
-
-            # image.set_data(obs[0])
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
-
-            action = agent.step(obs, reward, done, info)
-
             # seg = segmentation.felzenszwalb(color.rgb2hsv(obs[0]), scale = 500)
             # seg = segmentation.slic(color.rgb2hsv(obs[0]))
             # seg = segmentation.quickshift(color.rgb2hsv(obs[0]), ratio = 1, kernel_size = 100)
@@ -117,13 +110,17 @@ for arenaConfig in arenaConfigs:
             # fig_tmp.canvas.draw()
             # fig_tmp.canvas.flush_events()
 
+            # image.set_data(obs[0])
+            # fig.canvas.draw()
+            # fig.canvas.flush_events()
+
+            action = agent.step(obs, reward, done, info)
+
             # Visualization
             image.set_data(obs[0])
-            for bar, height, face_color, idx in zip(bars, agent.cluster_sizes, agent.bin_colors, agent.cluster_pixel_idx):
+            for bar, height, face_color in zip(bars, agent.bin_sizes, agent.bin_centers):
                 bar.set_height(height)
                 bar.set_facecolor(plt.cm.hsv(face_color))
-                # bar.set_facecolor(obs[0][tuple(idx)].mean(axis = 0))
-            # visual_imagery.set_data(plt.cm.hsv(agent.visual_imagery))
             fig.canvas.draw()
             fig.canvas.flush_events()
 

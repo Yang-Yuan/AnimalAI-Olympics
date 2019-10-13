@@ -45,7 +45,8 @@ class Agent(object):
         self.cluster_pixel_idx = None
         self.cluster_bin_idx = None
         self.cluster_centers = None
-        self.cluster_sizes = None
+
+        self.bin_sizes = None
         # cluster_size here doesn't have to be a class variable. Actually, it is bin_sizes.
         # It is for plotting the histogram.
 
@@ -162,41 +163,41 @@ class Agent(object):
 
         # initialize bin(pixel_idx, sizes)
         self.cluster_pixel_idx = []
-        self.cluster_sizes = np.zeros(Agent.n_bins)
+        self.bin_sizes = np.zeros(Agent.n_bins)
         bin_labels = np.digitize(obs_visual_h, Agent.bin_edges)
         for bin_id in range(Agent.n_bins):
             self.cluster_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
-            self.cluster_sizes[bin_id] = self.cluster_pixel_idx[bin_id].shape[1]
+            self.bin_sizes[bin_id] = self.cluster_pixel_idx[bin_id].shape[1]
 
         # update bin(pixel_idx, sizes): merge small bins into large bins
         for bin_id in range(self.n_bins):
-            if self.cluster_sizes[bin_id] > Agent.bin_size_limit \
+            if self.bin_sizes[bin_id] > Agent.bin_size_limit \
                     or (bin_id in self.predefined_colors_bins.values()):
                 continue
 
             delta = 1
             while True:
                 bin_id_tmp = (bin_id - delta) % self.n_bins
-                if self.cluster_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
                         or (bin_id in self.predefined_colors_bins.values()):
-                    self.cluster_sizes[bin_id - delta] += self.cluster_sizes[bin_id]
-                    self.cluster_sizes[bin_id] = 0
+                    self.bin_sizes[bin_id - delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id] = 0
                     self.cluster_pixel_idx[bin_id - delta] = np.concatenate(
                         (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id - delta]), axis=1)
                     break
 
                 bin_id_tmp = (bin_id + delta) % self.n_bins
-                if self.cluster_sizes[bin_id_tmp] > Agent.bin_size_limit \
+                if self.bin_sizes[bin_id_tmp] > Agent.bin_size_limit \
                         or (bin_id in self.predefined_colors_bins.values()):
-                    self.cluster_sizes[bin_id + delta] += self.cluster_sizes[bin_id]
-                    self.cluster_sizes[bin_id] = 0
+                    self.bin_sizes[bin_id + delta] += self.bin_sizes[bin_id]
+                    self.bin_sizes[bin_id] = 0
                     self.cluster_pixel_idx[bin_id + delta] = np.concatenate(
                         (self.cluster_pixel_idx[bin_id], self.cluster_pixel_idx[bin_id + delta]), axis=1)
                     break
 
                 delta += 1
 
-        self.cluster_pixel_idx = self.cluster_pixel_idx[0 != self.cluster_sizes]
+        self.cluster_pixel_idx = self.cluster_pixel_idx[0 != self.bin_sizes]
         self.cluster_centers = np.zeros(len(self.cluster_pixel_idx), dtype = float)
         for cluster_id in range(len(self.cluster_centers)):
             self.cluster_centers[cluster_id] = obs_visual_h[tuple(self.cluster_pixel_idx[cluster_id])].mean(axis=0)
