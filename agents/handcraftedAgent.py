@@ -247,8 +247,8 @@ class Agent(object):
         new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
         for ii in range(p_c4xy.shape[1]):
             for jj in range(p_c4xy.shape[2]):
-                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
-
+                # new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
+                new_visual[ii, jj] = Agent.bin_centers[p_c4xy[:, ii, jj].argmax()]
         return new_visual
 
     @staticmethod
@@ -262,7 +262,7 @@ class Agent(object):
         return p_c4xy
 
     @staticmethod
-    def computePc4xy_old_and_maybe_wrong(visual):
+    def computePc4xy_old(visual):
         # this way:
         # [defining neighborhood and computing the mean color
         # of the neighborhood and then computing the probability of each color
