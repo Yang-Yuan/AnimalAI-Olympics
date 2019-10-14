@@ -27,7 +27,19 @@ def orthogonalNeighbors(size):
                 valid_ii_idx = []
                 valid_jj_idx = []
                 for iii, jjj in zip(all_ii_idx, all_jj_idx):
-                    if 0 <= iii and iii < resolution and 0 <= jjj and jjj < resolution:
+                    if 0 <= iii < resolution and 0 <= jjj < resolution:
+                        valid_ii_idx.append(iii)
+                        valid_jj_idx.append(jjj)
+                neighbor_idx[ii, jj] = (valid_ii_idx, valid_jj_idx)
+    elif size == 12:
+        for ii in range(neighbor_idx.shape[0]):
+            for jj in range(neighbor_idx.shape[1]):
+                all_ii_idx = [ii, ii - 1, ii + 1, ii, ii, ii - 1, ii + 1, ii - 1, ii + 1, ii - 2, ii + 2, ii, ii]
+                all_jj_idx = [jj, jj, jj, jj - 1, jj + 1, jj - 1, jj + 1, jj + 1, jj - 1, jj, jj, jj - 2, jj + 2]
+                valid_ii_idx = []
+                valid_jj_idx = []
+                for iii, jjj in zip(all_ii_idx, all_jj_idx):
+                    if 0 <= iii < resolution and 0 <= jjj < resolution:
                         valid_ii_idx.append(iii)
                         valid_jj_idx.append(jjj)
                 neighbor_idx[ii, jj] = (valid_ii_idx, valid_jj_idx)

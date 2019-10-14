@@ -24,18 +24,21 @@ class Agent(object):
     bin_size_limit = 10
     gradient_limit = 0.03
 
-    n_bins = 30
+    n_bins = 20
     bin_edges = np.linspace(start=0, stop=1, num=n_bins + 1)
     bin_length = 1 / n_bins
     bin_centers = (bin_edges[: -1] + bin_edges[1:]) / 2
     predefined_colors_bins = {"green": np.digitize(predfined_colors_h.get("green"), bin_edges)}
 
     plt.ion()
-    fig, ax = plt.subplots(ncols=1, nrows=1)
-    image = ax.imshow((np.zeros((84, 84, 3))))
+    fig, axs = plt.subplots(ncols=3, nrows=1)
+    image0 = axs[0].imshow((np.zeros((84, 84, 3))))
+    image1 = axs[1].imshow((np.zeros((84, 84, 3))))
+    image2 = axs[2].imshow((np.zeros((84, 84, 3))))
 
     four_neighbor_idx = neighbors.orthogonalNeighbors(4)
     eight_neighbor_idx = neighbors.orthogonalNeighbors(8)
+    twel_neighbor_idx = neighbors.orthogonalNeighbors(12)
 
     def __init__(self):
         """
@@ -95,6 +98,11 @@ class Agent(object):
 
         obs_visual, obs_vector = obs
         obs_visual_h = Agent.toHue(obs_visual)
+
+        Agent.image0.set_data(plt.cm.hsv(obs_visual_h))
+        Agent.image2.set_data(obs_visual)
+        Agent.fig.canvas.draw()
+        Agent.fig.canvas.flush_events()
 
         self.histogramize(obs_visual_h)
         obs_visual_h_purified = Agent.bispaceClustering(obs_visual_h, self.cluster_centers)
@@ -218,7 +226,7 @@ class Agent(object):
         p_c4xy = Agent.computePc4xy(old_visual)
         p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
         while True:
-            Agent.image.set_data(plt.cm.hsv(old_visual))
+            Agent.image1.set_data(plt.cm.hsv(old_visual))
             Agent.fig.canvas.draw()
             Agent.fig.canvas.flush_events()
 
@@ -264,7 +272,7 @@ class Agent(object):
         p_c4xy = np.zeros(Agent.bin_centers.shape + visual.shape, dtype = float)
         for ii in range(visual.shape[0]):
             for jj in range(visual.shape[1]):
-                p_c4xy[:, ii, jj], _ = np.histogram(visual[Agent.eight_neighbor_idx[ii, jj]],
+                p_c4xy[:, ii, jj], _ = np.histogram(visual[Agent.twel_neighbor_idx[ii, jj]],
                                                     bins = Agent.bin_edges)
                 p_c4xy[:, ii, jj] = p_c4xy[:, ii, jj] / p_c4xy[:, ii, jj].sum()
         return p_c4xy
@@ -383,8 +391,8 @@ class Agent(object):
 
     @staticmethod
     def canStop(old_visual, old_centers, new_visual, new_centers):
-        print("old_centers: {}, new_centers: {}".format(old_centers, new_centers))
-        return np.all(old_visual == new_visual) and np.all(old_centers == new_centers)
+        print("new_centers: {}".format(new_centers))
+        return np.all(old_visual == new_visual)# and np.all(old_centers == new_centers)
 
     @staticmethod
     def toHue(rgb):
