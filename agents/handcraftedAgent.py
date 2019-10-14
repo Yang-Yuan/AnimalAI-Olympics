@@ -252,6 +252,14 @@ class Agent(object):
         return new_visual
 
     @staticmethod
+    def restartNewVisual(p_c4xy):
+        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
+        for ii in range(p_c4xy.shape[1]):
+            for jj in range(p_c4xy.shape[2]):
+                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
+        return new_visual
+
+    @staticmethod
     def computePc4xy(visual):
         p_c4xy = np.zeros(Agent.bin_centers.shape + visual.shape, dtype = float)
         for ii in range(visual.shape[0]):
