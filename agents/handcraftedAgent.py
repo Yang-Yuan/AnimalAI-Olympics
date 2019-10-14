@@ -1,5 +1,6 @@
 import numpy as np
 from skimage import measure
+from scipy.ndimage import gaussian_filter
 from matplotlib import pyplot as plt
 import neighbors
 
@@ -217,7 +218,6 @@ class Agent(object):
         p_c4xy = Agent.computePc4xy(old_visual)
         p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
         while True:
-
             Agent.image.set_data(plt.cm.hsv(old_visual))
             Agent.fig.canvas.draw()
             Agent.fig.canvas.flush_events()
@@ -242,17 +242,31 @@ class Agent(object):
 
         return new_visual
 
-    # @staticmethod
-    # def sampleNewVisual(p_c4xy):
+    @staticmethod
+    def sampleNewVisual(p_c4xy, size = 64):
+        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
+        for ii in range(p_c4xy.shape[1]):
+            for jj in range(p_c4xy.shape[2]):
+                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, size = size, p = p_c4xy[:, ii, jj]).mean()
 
+        return new_visual
 
     @staticmethod
     def computePc4xy(visual):
-        # these two functions are actually constitutes a smoothing filter,
-        # therefore, theoretically, any smoothing filter can be applied here.
-        # Even any other filter can be applied here, maybe unexpected results
-        # can be found throught different filters, as the probability of colors
-        # move following different patterns induced by different filters.
+
+
+    @staticmethod
+    def computePc4xy_old_and_maybe_wrong(visual):
+        # this way:
+        # [defining neighborhood and computing the mean color
+        # of the neighborhood and then computing the probability of each color
+        # according to the distance between the bin_colors and mean color]
+        # might be wrong.
+        # because p_c4xy represents the clustering in the coordinate space
+        # (while p_k4xy represents clustering in the colors space),
+        # the distance used to determine the probability of each bin_color
+        # should be measured in the coordinate space
+        # (while the distance for p_k4xy should be measured in color space).
 
         neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
         neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
@@ -342,6 +356,14 @@ class Agent(object):
                                             5: ([ii, ii + 1], [jj, jj + 1]),
                                             6: ([ii, ii - 1], [jj, jj + 1]),
                                             7: ([ii, ii + 1], [jj, jj - 1])}[min_idx[ii, jj]]
+                    # neighbor_idx[ii, jj] = {0: ([ii - 1], [jj]),
+                    #                         1: ([ii + 1], [jj]),
+                    #                         2: ([ii], [jj - 1]),
+                    #                         3: ([ii], [jj + 1]),
+                    #                         4: ([ii - 1], [jj - 1]),
+                    #                         5: ([ii + 1], [jj + 1]),
+                    #                         6: ([ii - 1], [jj + 1]),
+                    #                         7: ([ii + 1], [jj - 1])}[min_idx[ii, jj]]
 
         return neighbor_idx
 
