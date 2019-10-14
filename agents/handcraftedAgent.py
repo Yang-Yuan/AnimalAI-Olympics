@@ -225,9 +225,9 @@ class Agent(object):
             p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
             p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
 
-            new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
+            # new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
             # new_visual = Agent.bin_centers[p_c4xy.argmax(axis = 0)]
-            # new_visual = Agent.sampleNewVisual(p_c4xy)
+            new_visual = Agent.sampleNewVisual(p_c4xy)
             new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
             # TODO there might be some numerical error here that new_cluster_centers wiil go beyond [0, 1]
 
@@ -243,17 +243,23 @@ class Agent(object):
         return new_visual
 
     @staticmethod
-    def sampleNewVisual(p_c4xy, size = 64):
+    def sampleNewVisual(p_c4xy):
         new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
         for ii in range(p_c4xy.shape[1]):
             for jj in range(p_c4xy.shape[2]):
-                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, size = size, p = p_c4xy[:, ii, jj]).mean()
+                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
 
         return new_visual
 
     @staticmethod
     def computePc4xy(visual):
-
+        p_c4xy = np.zeros(Agent.bin_centers.shape + visual.shape, dtype = float)
+        for ii in range(visual.shape[0]):
+            for jj in range(visual.shape[1]):
+                p_c4xy[:, ii, jj], _ = np.histogram(visual[Agent.eight_neighbor_idx[ii, jj]],
+                                                    bins = Agent.bin_edges)
+                p_c4xy[:, ii, jj] = p_c4xy[:, ii, jj] / p_c4xy[:, ii, jj].sum()
+        return p_c4xy
 
     @staticmethod
     def computePc4xy_old_and_maybe_wrong(visual):
