@@ -4,18 +4,32 @@ import agentUtils
 
 
 class Agent(object):
-    predefined_colors = {"green": [0.506, 0.749, 0.255]}
-    predefined_colors_h = {k: agentUtils.toHue(v) for (k, v) in predefined_colors.items()}
 
-    color_diff_limit = 0.075
-    position_diff_limit = 1
-    size_limit = 5
+    # Task-related constants
+    predefined_colors = {"green": [0.506, 0.749, 0.255],
+                         "brown": [0.471, 0.337, 0.0471],
+                         "red": [0.722, 0.196, 0.196],
+                         "orange": [1, 0.675, 0.282],
+                         "box_dark": [0.196, 0.165, 0.133],
+                         "box_light": [0.318, 0.267, 0.22],
+                         "UL": [0.435, 0.367, 0.2]}
+    predefined_colors_h = {k: agentUtils.toHue(v.reshape(1, 1, 3))[0, 0] \
+                           for (k, v) in predefined_colors.items()}
 
-    center_of_view = [41.5, 41.5]
-    aim_error_limit = 5
-    hl = 2
-    default_test_length = 1000
+    # Environmental constants
     resolution = 84
+    center_of_view = [resolution / 2, resolution / 2]
+    default_test_length = 1000
+
+    # Perception limits of colors
+    color_diff_limit = 0.075 # TODO different limits for different object
+
+    # Control constants
+    aim_error_limit = 5
+    size_limit = 5
+    hl = 2
+
+
 
     def __init__(self):
         """
@@ -81,17 +95,7 @@ class Agent(object):
         diff_green = abs(obs_visual_h - Agent.predefined_colors_h.get("green"))
         is_green = diff_green < Agent.color_diff_limit
 
-        # self.visual_memory[self.step_n] = is_green
         self.step_n += 1
-
-        # print(obs_vector)
-        # For debug
-        # self.total_reward += reward
-        # print("step:{} reward:{} total_reward:{} done:{}".format(self.step_n, reward, self.total_reward, done))
-        # if 250 == self.step_n:
-        #     print(diff_green.min())
-        #     print("Failed")
-        #     sys.exit(1)
 
         if not is_green.any():
             self.pirouette_step_n += 1
@@ -107,12 +111,6 @@ class Agent(object):
             center_of_target = np.array(np.where(labels == target_label)).mean(axis=1)
             diff_center = center_of_target - Agent.center_of_view
             target_size = sizes[target_label - 1]
-
-        # diff_center_old
-        # diff_center
-        # target_size_old
-        # target_size
-        # obs_vector
 
         if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
             if target_size < Agent.size_limit:
@@ -131,5 +129,3 @@ class Agent(object):
         else:
             self.pirouette_step_n = 0
             return [1, 0]
-
-
