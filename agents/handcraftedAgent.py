@@ -4,7 +4,6 @@ import agentUtils
 
 
 class Agent(object):
-
     # Task-related constants
     predefined_colors = {"green": [0.506, 0.749, 0.255],
                          "brown": [0.471, 0.337, 0.0471],
@@ -13,7 +12,7 @@ class Agent(object):
                          "box_dark": [0.196, 0.165, 0.133],
                          "box_light": [0.318, 0.267, 0.22],
                          "UL": [0.435, 0.367, 0.2]}
-    predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin = 3))[0, 0] \
+    predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin=3))[0, 0] \
                            for (k, v) in predefined_colors.items()}
 
     # Environmental constants
@@ -22,14 +21,12 @@ class Agent(object):
     default_test_length = 1000
 
     # Perception limits of colors
-    color_diff_limit = 0.075 # TODO different limits for different object
+    color_diff_limit = 0.075  # TODO different limits for different object
 
     # Control constants
     aim_error_limit = 5
     size_limit = 5
     hl = 2
-
-
 
     def __init__(self):
         """
@@ -40,17 +37,9 @@ class Agent(object):
         self.step_n = 0
         self.total_reward = 0
         self.pirouette_step_n = 0
-        self.diff_center_old = None
-        self.target_size_old = None
+
         self.visual_memory = None
-
         self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
-
-        self.cluster_pixel_idx = None
-        self.cluster_bin_idx = None
-        self.cluster_centers = None
-
-        self.bin_sizes = None
 
     def reset(self, t=250):
         """
