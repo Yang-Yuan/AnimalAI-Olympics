@@ -1,7 +1,15 @@
 import numpy as np
-from handcraftedAgent import Agent
 
 resolution = 84
+
+# TODO these two parameters need to be tuned
+bin_size_limit = 10
+gradient_limit = 0.03
+
+n_bins = 20
+bin_edges = np.linspace(start=0, stop=1, num=n_bins + 1)
+bin_length = 1 / n_bins
+bin_centers = (bin_edges[: -1] + bin_edges[1:]) / 2
 
 
 def bispaceClustering(visual, cluster_centers):
@@ -222,3 +230,54 @@ def orthogonalNeighbors(size):
         return None
 
     return neighbor_idx
+
+
+def histogramize(obs_visual_h, predefined_colors_h):
+
+    predefined_colors_bins = {k: np.digitize(v, bin_edges) for (k, v) in predefined_colors_h.items()}
+
+    # initialize bin(pixel_idx, sizes)
+    cluster_pixel_idx = []
+    bin_sizes = np.zeros(n_bins, dtype=int)
+    bin_labels = np.digitize(obs_visual_h, bin_edges)
+    for bin_id in range(n_bins):
+        cluster_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
+        bin_sizes[bin_id] = cluster_pixel_idx[bin_id].shape[1]
+
+    # update bin(pixel_idx, sizes): merge small bins into large bins
+    for bin_id in range(n_bins):
+        if bin_sizes[bin_id] > bin_size_limit \
+                or (bin_id in predefined_colors_bins.values()):
+            continue
+
+        delta = 1
+        while True:
+            bin_id_tmp = (bin_id - delta) % n_bins
+            if bin_sizes[bin_id_tmp] > bin_size_limit \
+                    or (bin_id in predefined_colors_bins.values()):
+                bin_sizes[bin_id_tmp] += bin_sizes[bin_id]
+                bin_sizes[bin_id] = 0
+                cluster_pixel_idx[bin_id_tmp] = np.concatenate(
+                    (cluster_pixel_idx[bin_id], cluster_pixel_idx[bin_id_tmp]), axis=1)
+                break
+
+            bin_id_tmp = (bin_id + delta) % n_bins
+            if bin_sizes[bin_id_tmp] > bin_size_limit \
+                    or (bin_id in predefined_colors_bins.values()):
+                bin_sizes[bin_id_tmp] += bin_sizes[bin_id]
+                bin_sizes[bin_id] = 0
+                cluster_pixel_idx[bin_id_tmp] = np.concatenate(
+                    (cluster_pixel_idx[bin_id], cluster_pixel_idx[bin_id_tmp]), axis=1)
+                break
+
+            delta += 1
+
+    cluster_pixel_idx = [cluster_pixel_idx[ii] for ii in np.where(bin_sizes != 0)[0]]
+    cluster_centers = np.zeros(len(cluster_pixel_idx), dtype=float)
+    for cluster_id in range(len(cluster_centers)):
+        cluster_centers[cluster_id] = obs_visual_h[tuple(cluster_pixel_idx[cluster_id])].mean(axis=0)
+
+
+four_neighbor_idx = orthogonalNeighbors(4)
+eight_neighbor_idx = orthogonalNeighbors(8)
+twel_neighbor_idx = orthogonalNeighbors(12)
