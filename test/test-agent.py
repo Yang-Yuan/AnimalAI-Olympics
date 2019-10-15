@@ -73,18 +73,9 @@ env = UnityEnvironment(
 
 agent = Agent()
 
-# plt.ion()
-# fig, axs = plt.subplots(ncols = 2, nrows = 1)
-# image = axs[0].imshow(np.zeros((resolution, resolution, 3)))
-# bars = axs[1].bar(x = (agent.bin_edges[ : -1] + agent.bin_edges[1 : ]) / 2,
-#                   height = np.repeat(agent.resolution * agent.resolution, agent.n_bins),
-#                   width = agent.bin_length,
-#                   bottom = 0)
-# visual_imagery = axs[2].imshow(np.zeros((resolution, resolution, 3)))
-
-# fig_tmp, ax_tmp = plt.subplots()
-# image_tmp = ax_tmp.imshow(np.zeros((resolution, resolution, 3)))
-
+plt.ion()
+fig, ax = plt.subplots(ncols=1, nrows=1)
+image = ax.imshow(np.zeros((resolution, resolution, 3)))
 
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
@@ -104,12 +95,9 @@ for arenaConfig in arenaConfigs:
             action = agent.step(obs, reward, done, info)
 
             # Visualization
-            # image.set_data(obs[0])
-            # for bar, height, face_color in zip(bars, agent.bin_sizes, agent.bin_centers):
-            #     bar.set_height(height)
-            #     bar.set_facecolor(plt.cm.hsv(face_color))
-            # fig.canvas.draw()
-            # fig.canvas.flush_events()
+            image.set_data(obs[0])
+            fig.canvas.draw()
+            fig.canvas.flush_events()
 
             if all(brainInfo['Learner'].local_done):
                 break
@@ -117,6 +105,4 @@ for arenaConfig in arenaConfigs:
                 brainInfo = env.step(action)
 
 plt.close(fig)
-# plt.close(fig_tmp)
 env.close()
-

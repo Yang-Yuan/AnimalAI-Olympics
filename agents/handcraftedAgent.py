@@ -13,7 +13,7 @@ class Agent(object):
                          "box_dark": [0.196, 0.165, 0.133],
                          "box_light": [0.318, 0.267, 0.22],
                          "UL": [0.435, 0.367, 0.2]}
-    predefined_colors_h = {k: agentUtils.toHue(v.reshape(1, 1, 3))[0, 0] \
+    predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin = 3))[0, 0] \
                            for (k, v) in predefined_colors.items()}
 
     # Environmental constants
@@ -88,9 +88,7 @@ class Agent(object):
             return [1, 0]
 
         obs_visual, obs_vector = obs
-        obs_visual_h = Agent.toHue(obs_visual)
-
-        self.histogramize(obs_visual_h)
+        obs_visual_h = agentUtils.toHue(obs_visual)
 
         diff_green = abs(obs_visual_h - Agent.predefined_colors_h.get("green"))
         is_green = diff_green < Agent.color_diff_limit

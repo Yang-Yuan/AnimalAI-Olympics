@@ -232,7 +232,7 @@ def orthogonalNeighbors(size):
     return neighbor_idx
 
 
-def histogramize(obs_visual_h, predefined_colors_h):
+def initializeClusterByColor(obs_visual_h, predefined_colors_h):
 
     predefined_colors_bins = {k: np.digitize(v, bin_edges) for (k, v) in predefined_colors_h.items()}
 
@@ -276,6 +276,8 @@ def histogramize(obs_visual_h, predefined_colors_h):
     cluster_centers = np.zeros(len(cluster_pixel_idx), dtype=float)
     for cluster_id in range(len(cluster_centers)):
         cluster_centers[cluster_id] = obs_visual_h[tuple(cluster_pixel_idx[cluster_id])].mean(axis=0)
+
+    return cluster_pixel_idx, cluster_centers
 
 
 four_neighbor_idx = orthogonalNeighbors(4)
