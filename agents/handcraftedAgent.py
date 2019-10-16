@@ -31,11 +31,15 @@ class Agent(object):
     predefined_colors_bins = {"green": np.digitize(predfined_colors_h.get("green"), bin_edges)}
 
     plt.ion()
-    fig, ax = plt.subplots(ncols=1, nrows=1)
-    image = ax.imshow((np.zeros((84, 84, 3))))
+    fig, axs = plt.subplots(ncols=3, nrows=1)
+    image0 = axs[0].imshow((np.zeros((84, 84, 3))))
+    image1 = axs[1].imshow((np.zeros((84, 84, 3))))
+    image2 = axs[2].imshow((np.zeros((84, 84, 3))))
 
     four_neighbor_idx = neighbors.orthogonalNeighbors(4)
     eight_neighbor_idx = neighbors.orthogonalNeighbors(8)
+    twel_neighbor_idx = neighbors.orthogonalNeighbors(12)
+    r3_sparse_neighbor_idx = neighbors.sparseOrthogonalNeighbors(1)
 
     def __init__(self):
         """
@@ -95,6 +99,8 @@ class Agent(object):
 
         obs_visual, obs_vector = obs
         obs_visual_h = Agent.toHue(obs_visual)
+
+        Agent.image2.set_data(obs_visual)
 
         self.histogramize(obs_visual_h)
         obs_visual_h_purified = Agent.bispaceClustering(obs_visual_h, self.cluster_centers)
@@ -171,7 +177,7 @@ class Agent(object):
 
         # initialize bin(pixel_idx, sizes)
         self.cluster_pixel_idx = []
-        self.bin_sizes = np.zeros(Agent.n_bins, dtype = int)
+        self.bin_sizes = np.zeros(Agent.n_bins, dtype=int)
         bin_labels = np.digitize(obs_visual_h, Agent.bin_edges)
         for bin_id in range(Agent.n_bins):
             self.cluster_pixel_idx.append(np.array(np.where(bin_labels == bin_id + 1)))
@@ -206,7 +212,7 @@ class Agent(object):
                 delta += 1
 
         self.cluster_pixel_idx = [self.cluster_pixel_idx[ii] for ii in np.where(self.bin_sizes != 0)[0]]
-        self.cluster_centers = np.zeros(len(self.cluster_pixel_idx), dtype = float)
+        self.cluster_centers = np.zeros(len(self.cluster_pixel_idx), dtype=float)
         for cluster_id in range(len(self.cluster_centers)):
             self.cluster_centers[cluster_id] = obs_visual_h[tuple(self.cluster_pixel_idx[cluster_id])].mean(axis=0)
 
@@ -217,18 +223,21 @@ class Agent(object):
         old_cluster_centers = cluster_centers
         p_c4xy = Agent.computePc4xy(old_visual)
         p_k4c, p_c4k = Agent.computePk4cAndPc4k(old_cluster_centers)
+
+        Agent.image0.set_data(plt.cm.hsv(visual))
+
         while True:
-            Agent.image.set_data(plt.cm.hsv(old_visual))
+            Agent.image1.set_data(plt.cm.hsv(old_visual))
             Agent.fig.canvas.draw()
             Agent.fig.canvas.flush_events()
 
-            p_k4xy = np.tensordot(p_k4c, p_c4xy, axes = 1)
-            p_c4xy = np.tensordot(p_c4k, p_k4xy, axes = 1)
+            p_k4xy = np.tensordot(p_k4c, p_c4xy, axes=1)
+            p_c4xy = np.tensordot(p_c4k, p_k4xy, axes=1)
 
             # new_visual = np.tensordot(Agent.bin_centers, p_c4xy, axes = 1)
             # new_visual = Agent.bin_centers[p_c4xy.argmax(axis = 0)]
             new_visual = Agent.sampleNewVisual(p_c4xy)
-            new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes = 2) / p_k4xy.sum(axis = (1, 2))
+            new_cluster_centers = np.tensordot(p_k4xy, new_visual, axes=2) / p_k4xy.sum(axis=(1, 2))
             # TODO there might be some numerical error here that new_cluster_centers wiil go beyond [0, 1]
 
             if Agent.canStop(old_visual, old_cluster_centers, new_visual, new_cluster_centers):
@@ -244,7 +253,7 @@ class Agent(object):
 
     @staticmethod
     def sampleNewVisual(p_c4xy):
-        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
+        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype=float)
         for ii in range(p_c4xy.shape[1]):
             for jj in range(p_c4xy.shape[2]):
                 # new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
@@ -253,21 +262,23 @@ class Agent(object):
 
     @staticmethod
     def restartNewVisual(p_c4xy):
-        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype = float)
+        new_visual = np.zeros((Agent.resolution, Agent.resolution), dtype=float)
         for ii in range(p_c4xy.shape[1]):
             for jj in range(p_c4xy.shape[2]):
-                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p = p_c4xy[:, ii, jj])
+                new_visual[ii, jj] = np.random.choice(Agent.bin_centers, p=p_c4xy[:, ii, jj])
         return new_visual
 
     @staticmethod
-    def computePc4xy(visual):
-        p_c4xy = np.zeros(Agent.bin_centers.shape + visual.shape, dtype = float)
+    def computePc4xy(visual, p_c4xy = None):
+        p_c4xy_new = np.zeros(Agent.bin_centers.shape + visual.shape, dtype=float)
         for ii in range(visual.shape[0]):
             for jj in range(visual.shape[1]):
-                p_c4xy[:, ii, jj], _ = np.histogram(visual[Agent.eight_neighbor_idx[ii, jj]],
-                                                    bins = Agent.bin_edges)
-                p_c4xy[:, ii, jj] = p_c4xy[:, ii, jj] / p_c4xy[:, ii, jj].sum()
-        return p_c4xy
+                # idx_idx = np.random.choice(a=len(Agent.r3_sparse_neighbor_idx[ii, jj][0]), size=4, replace=False)
+                # idx = (Agent.r3_sparse_neighbor_idx[ii, jj][0][idx_idx], Agent.r3_sparse_neighbor_idx[ii, jj][1][idx_idx])
+                p_c4xy_new[:, ii, jj], _ = np.histogram(visual[Agent.twel_neighbor_idx[ii, jj]], bins=Agent.bin_edges)
+                p_c4xy_new[:, ii, jj] = p_c4xy_new[:, ii, jj] / p_c4xy_new[:, ii, jj].sum()
+
+        return p_c4xy + 0.4 * (p_c4xy_new - p_c4xy) if p_c4xy is not None else p_c4xy_new
 
     @staticmethod
     def computePc4xy_old(visual):
@@ -285,7 +296,7 @@ class Agent(object):
         neighbor_idx = Agent.truncatedMinimalNeighbors(visual, Agent.gradient_limit)
         neighbor_mean_visual = Agent.calculateMeanVisual(visual, neighbor_idx)
 
-        cluster_colors_visual = np.empty(Agent.bin_centers.shape + visual.shape, dtype = float)
+        cluster_colors_visual = np.empty(Agent.bin_centers.shape + visual.shape, dtype=float)
         for ii in range(len(Agent.bin_centers)):
             cluster_colors_visual[ii] = np.full(neighbor_mean_visual.shape, Agent.bin_centers[ii])
 
@@ -293,7 +304,7 @@ class Agent(object):
 
         old_settings = np.seterr(invalid='ignore')
         p_c4xy = np.exp(1 / cluster_colors_diffs)
-        p_c4xy = p_c4xy / p_c4xy.sum(axis = 0)
+        p_c4xy = p_c4xy / p_c4xy.sum(axis=0)
         p_c4xy[np.isnan(p_c4xy)] = 1
         np.seterr(**old_settings)
 
@@ -304,7 +315,7 @@ class Agent(object):
 
     @staticmethod
     def computePk4cAndPc4k(cluster_centers):
-        cluster_colors_spectrum = np.empty(cluster_centers.shape + Agent.bin_centers.shape, dtype = float)
+        cluster_colors_spectrum = np.empty(cluster_centers.shape + Agent.bin_centers.shape, dtype=float)
         for ii in range(len(cluster_centers)):
             cluster_colors_spectrum[ii] = np.full(Agent.bin_centers.shape, cluster_centers[ii])
 
@@ -313,9 +324,9 @@ class Agent(object):
         old_settings = np.seterr(invalid='ignore')
         p_k4c = np.exp(1 / cluster_colors_diffs)
         p_c4k = p_k4c.transpose()
-        p_k4c = p_k4c / p_k4c.sum(axis = 0)
+        p_k4c = p_k4c / p_k4c.sum(axis=0)
         p_k4c[np.isnan(p_k4c)] = 1
-        p_c4k = p_c4k / p_c4k.sum(axis = 0)
+        p_c4k = p_c4k / p_c4k.sum(axis=0)
         p_c4k[np.isnan(p_c4k)] = 1
         np.seterr(**old_settings)
 
@@ -340,23 +351,23 @@ class Agent(object):
         TODO try other neighborhood definitions
         """
 
-        padded_visual = np.pad(visual, pad_width = (1, 1), mode = 'constant', constant_values = (np.inf, np.inf))
+        padded_visual = np.pad(visual, pad_width=(1, 1), mode='constant', constant_values=(np.inf, np.inf))
 
         # for 8 neighbors of each pixel, calculate the abs(diff)
         diffs = np.zeros(visual.shape + (8,))
-        diffs[:, :, 0] = abs(padded_visual[: -2, 1 : -1] - visual) # up
-        diffs[:, :, 1] = abs(padded_visual[2 :, 1 : -1] - visual) # down
-        diffs[:, :, 2] = abs(padded_visual[1 : -1, : -2] - visual) # left
-        diffs[:, :, 3] = abs(padded_visual[1 : -1, 2 :] - visual) # right
-        diffs[:, :, 4] = abs(padded_visual[: -2, : -2] - visual) # up_left
-        diffs[:, :, 5] = abs(padded_visual[2 :, 2 :] - visual) # down_right
-        diffs[:, :, 6] = abs(padded_visual[: -2, 2 :] - visual) # up_right
-        diffs[:, :, 7] = abs(padded_visual[2 :, : -2] - visual) # down_left
+        diffs[:, :, 0] = abs(padded_visual[: -2, 1: -1] - visual)  # up
+        diffs[:, :, 1] = abs(padded_visual[2:, 1: -1] - visual)  # down
+        diffs[:, :, 2] = abs(padded_visual[1: -1, : -2] - visual)  # left
+        diffs[:, :, 3] = abs(padded_visual[1: -1, 2:] - visual)  # right
+        diffs[:, :, 4] = abs(padded_visual[: -2, : -2] - visual)  # up_left
+        diffs[:, :, 5] = abs(padded_visual[2:, 2:] - visual)  # down_right
+        diffs[:, :, 6] = abs(padded_visual[: -2, 2:] - visual)  # up_right
+        diffs[:, :, 7] = abs(padded_visual[2:, : -2] - visual)  # down_left
 
-        min_idx = diffs.argmin(axis = 2)
-        X, Y = np.meshgrid(np.arange(visual.shape[0]), np.arange(visual.shape[1]), indexing = 'ij')
+        min_idx = diffs.argmin(axis=2)
+        X, Y = np.meshgrid(np.arange(visual.shape[0]), np.arange(visual.shape[1]), indexing='ij')
         mins = diffs[(X, Y, min_idx)]
-        neighbor_idx = np.empty_like(mins, dtype = tuple)
+        neighbor_idx = np.empty_like(mins, dtype=tuple)
         for ii in range(mins.shape[0]):
             for jj in range(mins.shape[1]):
                 if mins[ii, jj] > t:
@@ -383,15 +394,15 @@ class Agent(object):
 
     @staticmethod
     def canStop(old_visual, old_centers, new_visual, new_centers):
-        print("old_centers: {}, new_centers: {}".format(old_centers, new_centers))
-        return np.all(old_visual == new_visual) and np.all(old_centers == new_centers)
+        print("new_centers: {}".format(old_centers))
+        return np.all(old_visual == new_visual)  # and np.all(old_centers == new_centers)
 
     @staticmethod
     def toHue(rgb):
         out_h = np.zeros(rgb.shape[:-1])
 
-        out_v = rgb.max(-1) # max
-        delta = rgb.ptp(-1) # max - min
+        out_v = rgb.max(-1)  # max
+        delta = rgb.ptp(-1)  # max - min
 
         old_settings = np.seterr(invalid='ignore')
 
@@ -417,5 +428,3 @@ class Agent(object):
         out_h[np.isnan(out_h)] = 0
 
         return out_h
-
-
