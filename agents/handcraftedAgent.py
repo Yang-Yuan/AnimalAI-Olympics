@@ -273,6 +273,7 @@ class Agent(object):
         p_c4xy_new = np.zeros(Agent.bin_centers.shape + visual.shape, dtype=float)
         for ii in range(visual.shape[0]):
             for jj in range(visual.shape[1]):
+                # TODO how you define a soft neighborhood is important.
                 # idx_idx = np.random.choice(a=len(Agent.r3_sparse_neighbor_idx[ii, jj][0]), size=4, replace=False)
                 # idx = (Agent.r3_sparse_neighbor_idx[ii, jj][0][idx_idx], Agent.r3_sparse_neighbor_idx[ii, jj][1][idx_idx])
                 p_c4xy_new[:, ii, jj], _ = np.histogram(visual[Agent.twel_neighbor_idx[ii, jj]], bins=Agent.bin_edges)
