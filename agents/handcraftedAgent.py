@@ -3,6 +3,8 @@ from skimage import measure
 import agentUtils
 from ActionStateMachine import ActionStateMachine
 import AgentConstants
+import sys
+import warnings
 
 
 class Agent(object):
@@ -17,11 +19,26 @@ class Agent(object):
         self.total_reward = 0
         self.pirouette_step_n = 0
 
-        self.visual_memory = None
-        self.visual_imagery = np.zeros((AgentConstants.resolution, AgentConstants.resolution))
+        self.visual_memory = np.zeros(
+            (AgentConstants.pirouette_step_limit, AgentConstants.resolution, AgentConstants.resolution), dtype=float)
+
+        # self.visual_imagery = np.zeros((AgentConstants.resolution, AgentConstants.resolution))
 
         self.actionStateMachine = ActionStateMachine(self)
         self.currentAction = None
+
+        self.obs_visual = None
+        self.obs_vector = None
+        self.obs_visual_h = None
+
+        self.green_labels = None
+        self.green_sizes = None
+        self.brown_labels = None
+        self.brown_sizes = None
+        self.red_labels = None
+        self.red_sizes = None
+        self.orange_labels = None
+        self.orange_sizes = None
 
     def reset(self, t=250):
         """
@@ -36,6 +53,9 @@ class Agent(object):
         self.visual_memory = np.zeros((self.t, AgentConstants.resolution, AgentConstants.resolution), dtype=np.int)
         self.actionStateMachine.reset()
         self.currentAction = None
+        self.obs_visual = None
+        self.obs_vector = None
+        self.obs_visual_h = None
 
     def step(self, obs, reward, done, info):
         """
@@ -55,19 +75,25 @@ class Agent(object):
         if done:
             return [0, 0]
 
-        if self.actionStateMachine.is_static:
-            self.actionStateMachine.pirouette()
+        self.obs_visual, self.obs_vector = obs
+        self.obs_visual_h = agentUtils.toHue(self.obs_visual)
 
-        if self.actionStateMachine.is_pirouetting:
-            if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
-                self.actionStateMachine.hold()
-            else:
-                self.actionStateMachine.stop()
+        while(True):
+            if self.actionStateMachine.is_static:
+                if 0 == self.pirouette_step_n:
+                    self.actionStateMachine.pirouette()
+                    break
+                elif AgentConstants.pirouette_step_limit == self.pirouette_step_n:
+                    self.
+
+            if self.actionStateMachine.is_pirouetting:
+                if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
+                    self.actionStateMachine.hold()
+                    break
+                else:
+                    self.actionStateMachine.analyze_panorama()
 
         return self.currentAction
-
-        obs_visual, obs_vector = obs
-        obs_visual_h = agentUtils.toHue(obs_visual)
 
         diff_green = abs(obs_visual_h - AgentConstants.predefined_colors_h.get("green"))
         is_green = diff_green < AgentConstants.color_diff_limit
