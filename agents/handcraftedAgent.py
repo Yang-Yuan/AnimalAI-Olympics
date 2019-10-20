@@ -1,32 +1,11 @@
 import numpy as np
 from skimage import measure
 import agentUtils
+from ActionStateMachine import ActionStateMachine
+import AgentConstants
 
 
 class Agent(object):
-    # Task-related constants
-    predefined_colors = {"green": [0.506, 0.749, 0.255],
-                         "brown": [0.471, 0.337, 0.0471],
-                         "red": [0.722, 0.196, 0.196],
-                         "orange": [1, 0.675, 0.282],
-                         "box_dark": [0.196, 0.165, 0.133],
-                         "box_light": [0.318, 0.267, 0.22],
-                         "UL": [0.435, 0.367, 0.2]}
-    predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin=3))[0, 0] \
-                           for (k, v) in predefined_colors.items()}
-
-    # Environmental constants
-    resolution = 84
-    center_of_view = [resolution / 2, resolution / 2]
-    default_test_length = 1000
-
-    # Perception limits of colors
-    color_diff_limit = 0.075  # TODO different limits for different object
-
-    # Control constants
-    aim_error_limit = 5
-    size_limit = 5
-    hl = 2
 
     def __init__(self):
         """
@@ -39,7 +18,10 @@ class Agent(object):
         self.pirouette_step_n = 0
 
         self.visual_memory = None
-        self.visual_imagery = np.zeros((Agent.resolution, Agent.resolution))
+        self.visual_imagery = np.zeros((AgentConstants.resolution, AgentConstants.resolution))
+
+        self.actionStateMachine = ActionStateMachine(self)
+        self.currentAction = None
 
     def reset(self, t=250):
         """
@@ -51,7 +33,9 @@ class Agent(object):
         self.step_n = 0
         self.total_reward = 0
         self.pirouette_step_n = 0
-        self.visual_memory = np.zeros((self.t, Agent.resolution, Agent.resolution), dtype=np.int)
+        self.visual_memory = np.zeros((self.t, AgentConstants.resolution, AgentConstants.resolution), dtype=np.int)
+        self.actionStateMachine.reset()
+        self.currentAction = None
 
     def step(self, obs, reward, done, info):
         """
@@ -71,16 +55,22 @@ class Agent(object):
         if done:
             return [0, 0]
 
-        # magic code!
-        if self.pirouette_step_n > 70:
-            self.pirouette_step_n = 0
-            return [1, 0]
+        if self.actionStateMachine.is_static:
+            self.actionStateMachine.pirouette()
+
+        if self.actionStateMachine.is_pirouetting:
+            if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
+                self.actionStateMachine.hold()
+            else:
+                self.actionStateMachine.stop()
+
+        return self.currentAction
 
         obs_visual, obs_vector = obs
         obs_visual_h = agentUtils.toHue(obs_visual)
 
-        diff_green = abs(obs_visual_h - Agent.predefined_colors_h.get("green"))
-        is_green = diff_green < Agent.color_diff_limit
+        diff_green = abs(obs_visual_h - AgentConstants.predefined_colors_h.get("green"))
+        is_green = diff_green < AgentConstants.color_diff_limit
 
         self.step_n += 1
 
@@ -89,25 +79,25 @@ class Agent(object):
             return [0, 1]
 
         if 1 == is_green.sum():
-            diff_center = np.array(np.where(is_green)).transpose()[0] - Agent.center_of_view
+            diff_center = np.array(np.where(is_green)).transpose()[0] - AgentConstants.center_of_view
             target_size = 1
         else:
             labels, label_num = measure.label(input=is_green, background=False, return_num=True, connectivity=1)
             sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
             target_label = np.argmax(sizes) + 1
             center_of_target = np.array(np.where(labels == target_label)).mean(axis=1)
-            diff_center = center_of_target - Agent.center_of_view
+            diff_center = center_of_target - AgentConstants.center_of_view
             target_size = sizes[target_label - 1]
 
-        if diff_center[1] < -Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
-            if target_size < Agent.size_limit:
+        if diff_center[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+            if target_size < AgentConstants.size_limit:
                 self.pirouette_step_n = 0
                 return [1, 2]
             else:
                 self.pirouette_step_n += 1
                 return [0, 2]
-        elif diff_center[1] > Agent.aim_error_limit * (1 + np.exp(-target_size / Agent.hl)):
-            if target_size < Agent.size_limit:
+        elif diff_center[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+            if target_size < AgentConstants.size_limit:
                 self.pirouette_step_n = 0
                 return [1, 1]
             else:
