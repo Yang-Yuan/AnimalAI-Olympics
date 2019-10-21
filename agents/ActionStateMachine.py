@@ -10,24 +10,28 @@ class ActionStateMachine(StateMachine):
     # agent not moving
     pirouetting = State("pirouetting")
     # rotating in situ to observe
-    roaming = State("roaming")
+    rotating_to_direction = State("rotating_to_direction")
     # not finding any good balls
+    roaming = State("roaming")
+    # moving forward for a distance if possible
     targeting = State("targeting")
     # targeting a specific color
     accelerating = State("accelerating")
     # avoiding the bad zones
-    stopping = State("stopping")
+    decelerating = State("decelerating")
     # let the speed decrease spontaneously
     # ************************** states end ***************************
 
     # ************************** actions ***************************
-    hold = static.to.itself() | pirouetting.to.itself() | targeting.to.itself() | accelerating.to.itself()
+    hold = static.to.itself() | pirouetting.to.itself() | targeting.to.itself() | \
+           accelerating.to.itself() | rotating_to_direction.to.itself() | roaming.to.itself()
     pirouette = static.to(pirouetting)
-    roam = static.to(roaming)
+    rotate_to_direction = static.to(rotating_to_direction)
+    roam = rotating_to_direction.to(roaming)
     target = pirouetting.to(targeting) | accelerating.to(targeting)
     accelerate = targeting.to(accelerating)
-    slowdown = accelerating.to(stopping)
-    stop = stopping.to(static)
+    decelerate = accelerating.to(decelerating) | roaming.to(decelerating)
+    stop = decelerating.to(static)
     analyze_panorama = pirouetting.to(static)
     reset = static.to.itself() | pirouetting.to(static) | targeting.to(static) | accelerating.to(static) | stopping.to(
         static)
@@ -48,6 +52,7 @@ class ActionStateMachine(StateMachine):
 
     def on_roam(self):
         print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        self.agent.roaming_step_n = np.random.randint(low = 1, high = AgentConstants.roam_step_limit)
 
     def on_target(self):
         print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
@@ -78,16 +83,32 @@ class ActionStateMachine(StateMachine):
             self.agent.spacious_direction = np.argmax(
                 [(frame & AgentConstants.road_mask).sum() for frame in self.agent.is_yellow])
 
+    def on_rotate_to_direction(self):
+        print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
+        if AgentConstants.pirouette_step_limit / 2 <= self.agent.spacious_direction < AgentConstants.pirouette_step_limit:
+            self.agent.spacious_direction -= 60
+
     # ************************** action callbacks end***************************
 
     # ************************** state callbacks ***************************
     def on_enter_pirouetting(self):
         print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
         self.agent.visual_memory[self.agent.pirouette_step_n] = self.agent.obs_visual_h
-        self.agent.currentAction = [0, 1]
+        self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
 
-    def on_enter_roaming(self):
+    def on_enter_rotating_to_direction(self):
         print("on_enter_roaming~~~~~~~~~~~~~~~~~")
+        if self.agent.spacious_direction > 0:
+            self.agent.currentAction = AgentConstants.left
+            self.agent.spacious_direction -= 1
+        else:
+            self.agent.currentAction = AgentConstants.right
+            self.agent.spacious_direction += 1
+
+    def on_roaming(self):
+        self.agent.currentAction = AgentConstants.forward
+        self.agent.roaming_step_n -= 1
+
 
     # ************************** state callbacks ends***************************

@@ -86,17 +86,45 @@ class Agent(object):
                 elif AgentConstants.pirouette_step_limit == self.pirouette_step_n:
                     if self.target_color is not None:
                         self.actionStateMachine.target()
-                        break
                     else:
-                        self.actionStateMachine.roam()
-                        break
+                        if self.spacious_direction != 0:
+                            self.actionStateMachine.rotate_to_direction()
+                            break
+                        else:
+                            self.actionStateMachine.roam()
+                            continue
 
-            if self.actionStateMachine.is_pirouetting:
+            elif self.actionStateMachine.is_rotating_to_direction():
+                if self.spacious_direction != 0:
+                    self.actionStateMachine.hold()
+                    break
+                else:
+                    self.roam()
+                    continue
+
+            elif self.actionStateMachine.is_roaming:
+                if self.agent.roaming_step_n > 0:
+                    self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
+                        "red")) < AgentConstants.color_diff_limit
+                    if (self.agent.is_red & AgentConstants.road_mask).sum() > AgentConstants.red_pixel_on_road_limit:
+                        self.actionStateMachine.decelerate()
+                        continue
+                    else:
+                        self.actionStateMachine.hold()
+                        break
+                else:
+                    self.actionStateMachine.decelerate()
+
+            elif self.actionStateMachine.is_decelerating():
+
+
+            elif self.actionStateMachine.is_pirouetting:
                 if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
                     self.actionStateMachine.hold()
                     break
                 else:
                     self.actionStateMachine.analyze_panorama()
+                    continue
 
         return self.currentAction
 
