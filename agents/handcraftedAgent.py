@@ -31,14 +31,13 @@ class Agent(object):
         self.obs_vector = None
         self.obs_visual_h = None
 
-        self.green_labels = None
-        self.green_sizes = None
-        self.brown_labels = None
-        self.brown_sizes = None
-        self.red_labels = None
-        self.red_sizes = None
-        self.orange_labels = None
-        self.orange_sizes = None
+        self.is_green_memory = None
+        self.is_brown_memory = None
+        self.is_red_memory = None
+        self.is_orange_memory = None
+
+        self.target_color = None
+        self.spacious_direction = None
 
     def reset(self, t=250):
         """
@@ -56,6 +55,7 @@ class Agent(object):
         self.obs_visual = None
         self.obs_vector = None
         self.obs_visual_h = None
+        self.target_color = None
 
     def step(self, obs, reward, done, info):
         """
@@ -78,13 +78,18 @@ class Agent(object):
         self.obs_visual, self.obs_vector = obs
         self.obs_visual_h = agentUtils.toHue(self.obs_visual)
 
-        while(True):
+        while True:
             if self.actionStateMachine.is_static:
                 if 0 == self.pirouette_step_n:
                     self.actionStateMachine.pirouette()
                     break
                 elif AgentConstants.pirouette_step_limit == self.pirouette_step_n:
-                    self.
+                    if self.target_color is not None:
+                        self.actionStateMachine.target()
+                        break
+                    else:
+                        self.actionStateMachine.roam()
+                        break
 
             if self.actionStateMachine.is_pirouetting:
                 if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
