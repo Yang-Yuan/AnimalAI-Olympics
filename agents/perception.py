@@ -1,4 +1,6 @@
 import AgentConstants
+import numpy as np
+import warnings
 
 
 class Perception(object):
@@ -52,4 +54,41 @@ class Perception(object):
         if self.agent.target_color == "green":
             return self.agent.is_green.any()
         elif self.agent.target_color == "brown":
-            return self.agent.is_brown
+            return self.agent.is_brown.any()
+
+    def renew_target_from_panorama(self):
+
+        if self.agent.pirouette_step_n == AgentConstants.pirouette_step_limit:
+
+            self.agent.target_color = None
+            self.agent.safest_direction = None
+
+            if np.array(self.agent.is_brown_memory.queue)[-AgentConstants.pirouette_step_limit:].any():
+                self.agent.target_color = "brown"
+            elif np.array(self.agent.is_green_memory.queue)[-AgentConstants.pirouette_step_limit:].any():
+                self.agent.target_color = "green"
+            else:
+                is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
+                if is_yellow.any():
+                    self.agent.safest_direction = np.argmax(
+                        [(frame & AgentConstants.road_mask).sum() for frame in self.agent.is_yellow])
+                else:
+                    warnings.warn("Nowhere to go, just move forward")
+                    self.agent.safest_direction = 0
+            print("target renewed: {} and {}".format(self.agent.target_color, self.agent.safest_direction))
+
+    def renew_target(self):
+
+        if self.agent.target_color == "green" and self.agent.is_brown.any():
+            self.agent.target_color = "brown"
+            return True
+
+        if self.agent.target_color is None and self.agent.is_green.any():
+            self.agent.target_color = "green"
+            return True
+
+        if self.agent.target_color is None and self.agent.is_brown.any():
+            self.agent.target_color = "brown"
+            return True
+
+        return False
