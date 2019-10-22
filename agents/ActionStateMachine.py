@@ -134,5 +134,8 @@ class ActionStateMachine(StateMachine):
 
 # ************************** callbacks for chase ***************************
     def on_chase(self):
+        pass
 
+    def on_chasing(self):
+        pass
 # ************************** callbacks for chase ends ***************************

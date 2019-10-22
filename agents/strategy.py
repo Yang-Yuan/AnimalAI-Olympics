@@ -75,7 +75,7 @@ class Strategy(object):
 
             # if the agent is chasing
             elif self.agent.actionStateMachine.is_chasing():
-
+                pass
 
             # if the agent is decelerating
             elif self.agent.actionStateMachine.is_decelerating():
