@@ -19,6 +19,7 @@ center_of_view = [resolution / 2, resolution / 2]
 default_test_length = 1000
 
 # Perception limits of colors
+memory_size = 60
 color_diff_limit = 0.075  # TODO different limits for different object
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 for delta, ii in zip(np.arange(resolution / 2, dtype = int),
@@ -36,6 +37,7 @@ roam_step_limit = 10
 red_pixel_on_road_limit = 882
 
 # actions
+taxi = [0, 0]
 right = [0, 1]
 left = [0, 2]
 forward = [1, 0]

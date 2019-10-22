@@ -2,9 +2,10 @@ import numpy as np
 from skimage import measure
 import agentUtils
 from ActionStateMachine import ActionStateMachine
+from strategy import Strategy
+from perception import Perception
 import AgentConstants
-import sys
-import warnings
+import queue
 
 
 class Agent(object):
@@ -19,12 +20,23 @@ class Agent(object):
         self.total_reward = 0
         self.pirouette_step_n = 0
 
-        self.visual_memory = np.zeros(
-            (AgentConstants.pirouette_step_limit, AgentConstants.resolution, AgentConstants.resolution), dtype=float)
+        self.done = None
+        self.reward = None
+        self.info = None
+
+        self.visual_h_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.is_green_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.is_brown_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.is_red_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.is_orange_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.is_yellow_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        self.vector_memory = queue.Queue(maxsize = AgentConstants.memory_size)
 
         # self.visual_imagery = np.zeros((AgentConstants.resolution, AgentConstants.resolution))
 
         self.actionStateMachine = ActionStateMachine(self)
+        self.strategy = Strategy(self)
+        self.perception = Perception(self)
         self.currentAction = None
 
         self.obs_visual = None
@@ -37,7 +49,7 @@ class Agent(object):
         self.is_orange_memory = None
 
         self.target_color = None
-        self.spacious_direction = None
+        self.safest_direction = None
 
     def reset(self, t=250):
         """
@@ -49,13 +61,15 @@ class Agent(object):
         self.step_n = 0
         self.total_reward = 0
         self.pirouette_step_n = 0
-        self.visual_memory = np.zeros((self.t, AgentConstants.resolution, AgentConstants.resolution), dtype=np.int)
         self.actionStateMachine.reset()
         self.currentAction = None
         self.obs_visual = None
         self.obs_vector = None
         self.obs_visual_h = None
         self.target_color = None
+        self.done = None
+        self.reward = None
+        self.info = None
 
     def step(self, obs, reward, done, info):
         """
@@ -72,59 +86,19 @@ class Agent(object):
         :param info: contains auxiliary diagnostic information, including eBrainInfo.
         :return: the action to take, a list or size 2
         """
-        if done:
-            return [0, 0]
 
+        # set primitive observations
         self.obs_visual, self.obs_vector = obs
         self.obs_visual_h = agentUtils.toHue(self.obs_visual)
+        self.done = done
+        self.reward = reward
+        self.info = info
 
-        while True:
-            if self.actionStateMachine.is_static:
-                if 0 == self.pirouette_step_n:
-                    self.actionStateMachine.pirouette()
-                    break
-                elif AgentConstants.pirouette_step_limit == self.pirouette_step_n:
-                    if self.target_color is not None:
-                        self.actionStateMachine.target()
-                    else:
-                        if self.spacious_direction != 0:
-                            self.actionStateMachine.rotate_to_direction()
-                            break
-                        else:
-                            self.actionStateMachine.roam()
-                            continue
+        # perceive atop primtive observations
+        self.perception.perceive()
 
-            elif self.actionStateMachine.is_rotating_to_direction():
-                if self.spacious_direction != 0:
-                    self.actionStateMachine.hold()
-                    break
-                else:
-                    self.roam()
-                    continue
-
-            elif self.actionStateMachine.is_roaming:
-                if self.agent.roaming_step_n > 0:
-                    self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-                        "red")) < AgentConstants.color_diff_limit
-                    if (self.agent.is_red & AgentConstants.road_mask).sum() > AgentConstants.red_pixel_on_road_limit:
-                        self.actionStateMachine.decelerate()
-                        continue
-                    else:
-                        self.actionStateMachine.hold()
-                        break
-                else:
-                    self.actionStateMachine.decelerate()
-
-            elif self.actionStateMachine.is_decelerating():
-
-
-            elif self.actionStateMachine.is_pirouetting:
-                if self.pirouette_step_n < AgentConstants.pirouette_step_limit:
-                    self.actionStateMachine.hold()
-                    break
-                else:
-                    self.actionStateMachine.analyze_panorama()
-                    continue
+        # run strategy
+        self.strategy.run_strategy()
 
         return self.currentAction
 
