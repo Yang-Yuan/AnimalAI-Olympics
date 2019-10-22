@@ -24,18 +24,37 @@ class ActionStateMachine(StateMachine):
 # ************************** states end ***************************
 
 # ************************** actions ***************************
-    hold = static.to.itself() | pirouetting.to.itself() | searching.to.itself() | \
-           chasing.to.itself() | rotating_to_direction.to.itself() | roaming.to.itself()
-    pirouette = static.to(pirouetting)
-    rotate_to_direction = static.to(rotating_to_direction)
-    roam = rotating_to_direction.to(roaming)
-    search = pirouetting.to(searching) | chasing.to(searching)
-    accelerate = searching.to(chasing)
-    decelerate = chasing.to(decelerating) | roaming.to(decelerating)
-    stop = decelerating.to(static)
-    analyze_panorama = pirouetting.to(static)
-    reset = static.to.itself() | pirouetting.to(static) | searching.to(static) | chasing.to(static) | \
-            decelerating.to(static)
+    hold = static.to.itself() | \
+           pirouetting.to.itself() | \
+           searching.to.itself() | \
+           chasing.to.itself() | \
+           rotating_to_direction.to.itself() | \
+           roaming.to.itself() | \
+           decelerating.to.itself()
+
+    pirouette = static.to(pirouetting) | \
+                decelerating.to(pirouetting)
+
+    rotate_to_direction = pirouetting.to(rotating_to_direction)
+
+    roam = pirouetting.to(roaming) | \
+           rotating_to_direction.to(roaming)
+
+    search = pirouetting.to(searching) | \
+             chasing.to(searching)
+
+    chase = searching.to(chasing)
+
+    decelerate = chasing.to(decelerating) | \
+                 roaming.to(decelerating)
+
+    reset = static.to.itself() | \
+            pirouetting.to(static) | \
+            searching.to(static) | \
+            chasing.to(static) | \
+            decelerating.to(static) | \
+            roaming.to(static) | \
+            rotating_to_direction.to(static)
 # ************************** actions end***************************
 
     def __init__(self, agent):
@@ -43,6 +62,7 @@ class ActionStateMachine(StateMachine):
         super(ActionStateMachine, self).__init__()
 
 # ************************** action callbacks ***************************
+
     def on_pirouette(self):
         print("on_pirouette~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.target_color = None
