@@ -134,7 +134,7 @@ class ActionStateMachine(StateMachine):
 
 # ************************** callbacks for chase ***************************
     def on_chase(self):
-        pass
+        self.agent.target_color
 
     def on_chasing(self):
         pass

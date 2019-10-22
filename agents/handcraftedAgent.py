@@ -15,15 +15,32 @@ class Agent(object):
          Load your agent here and initialize anything needed
          WARNING: any path to files you wish to access on the docker should be ABSOLUTE PATHS
         """
+
         self.t = 0
         self.step_n = 0
-        self.total_reward = 0
-        self.pirouette_step_n = 0
 
+        # functional modules
+        self.actionStateMachine = ActionStateMachine(self)
+        self.strategy = Strategy(self)
+        self.perception = Perception(self)
+
+        # primitive perception
+        self.obs_visual = None
+        self.obs_vector = None
+        self.obs_visual_h = None
         self.done = None
         self.reward = None
         self.info = None
 
+        # precess perceptions
+        self.is_green = None
+        self.is_brown = None
+        self.is_red = None
+        self.is_orange = None
+        self.is_yellow = None
+        self.is_target_color = None
+
+        # memory
         self.visual_h_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.is_green_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.is_brown_memory = queue.Queue(maxsize = AgentConstants.memory_size)
@@ -32,24 +49,14 @@ class Agent(object):
         self.is_yellow_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.vector_memory = queue.Queue(maxsize = AgentConstants.memory_size)
 
-        # self.visual_imagery = np.zeros((AgentConstants.resolution, AgentConstants.resolution))
-
-        self.actionStateMachine = ActionStateMachine(self)
-        self.strategy = Strategy(self)
-        self.perception = Perception(self)
+        # output action
         self.currentAction = None
 
-        self.obs_visual = None
-        self.obs_vector = None
-        self.obs_visual_h = None
-
-        self.is_green_memory = None
-        self.is_brown_memory = None
-        self.is_red_memory = None
-        self.is_orange_memory = None
-
+        # strategy-related variables
+        self.pirouette_step_n = 0
         self.target_color = None
         self.safest_direction = None
+        # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t=250):
         """
@@ -59,7 +66,6 @@ class Agent(object):
         """
         self.t = t
         self.step_n = 0
-        self.total_reward = 0
         self.pirouette_step_n = 0
         self.actionStateMachine.reset()
         self.currentAction = None
