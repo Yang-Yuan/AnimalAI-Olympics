@@ -39,7 +39,7 @@ class Strategy(object):
                             self.agent.actionStateMachine.rotate_to_direction()
                             break
                     else:
-                        self.agent.actionStateMachine.target()
+                        self.agent.actionStateMachine.search()
                         break
 
             # if the agent is rotating_to_direction
@@ -66,7 +66,7 @@ class Strategy(object):
 
             # if the agent is searching
             elif self.agent.actionStateMachine.is_searching():
-                if self.agent.is_found():
+                if self.agent.perception.is_found():
                     self.agent.actionStateMachine.chase()
                     break
                 else:
@@ -76,11 +76,12 @@ class Strategy(object):
             # if the agent is chasing
             elif self.agent.actionStateMachine.is_chasing():
 
+
             # if the agent is decelerating
             elif self.agent.actionStateMachine.is_decelerating():
                 if self.agent.perception.is_static():
-                    self.agent.actionStateMachine.stop()
-                    continue
+                    self.agent.actionStateMachine.pirouette()
+                    break
                 else:
                     self.agent.actionStateMachine.hold()
                     break

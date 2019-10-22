@@ -29,7 +29,7 @@ class ActionStateMachine(StateMachine):
     pirouette = static.to(pirouetting)
     rotate_to_direction = static.to(rotating_to_direction)
     roam = rotating_to_direction.to(roaming)
-    target = pirouetting.to(searching) | chasing.to(searching)
+    search = pirouetting.to(searching) | chasing.to(searching)
     accelerate = searching.to(chasing)
     decelerate = chasing.to(decelerating) | roaming.to(decelerating)
     stop = decelerating.to(static)
