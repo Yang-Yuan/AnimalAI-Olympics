@@ -61,31 +61,13 @@ class ActionStateMachine(StateMachine):
         self.agent = agent
         super(ActionStateMachine, self).__init__()
 
-# ************************** action callbacks ***************************
+# ************************** callbacks for pirouette ***************************
 
     def on_pirouette(self):
         print("on_pirouette~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.target_color = None
         self.agent.safest_direction = None
 
-    def on_roam(self):
-        print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.roaming_step_n = np.random.randint(low = 1, high = AgentConstants.roam_step_limit)
-
-    def on_search(self):
-        print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-    def on_stop(self):
-        print("on_stop~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.pirouette_step_n = 0
-
-    def on_rotate_to_direction(self):
-        print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
-        if AgentConstants.pirouette_step_limit / 2 <= self.agent.spacious_direction < AgentConstants.pirouette_step_limit:
-            self.agent.spacious_direction -= 60
-# ************************** action callbacks end***************************
-
-# ************************** state callbacks ***************************
     def on_enter_pirouetting(self):
         print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
         self.agent.currentAction = AgentConstants.left
@@ -109,6 +91,31 @@ class ActionStateMachine(StateMachine):
                 else:
                     warnings.warn("Nowhere to go, just move forward")
                     self.agent.safest_direction = 0
+# ************************** callbacks for pirouette end***************************
+
+# ************************** callbacks for roam ***************************
+    def on_roam(self):
+        print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        self.agent.roaming_step_n = np.random.randint(low = 1, high = AgentConstants.roam_step_limit)
+
+    def on_roaming(self):
+        self.agent.currentAction = AgentConstants.forward
+        self.agent.roaming_step_n -= 1
+# ************************** callbacks for roam end***************************
+
+# ************************** callbacks for search ***************************
+    def on_search(self):
+        print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+
+# ************************** callbacks for search ends***************************
+
+
+# ************************** callbacks for rotate_to_direction ***************************
+    def on_rotate_to_direction(self):
+        print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
+        if AgentConstants.pirouette_step_limit / 2 <= self.agent.spacious_direction \
+                < AgentConstants.pirouette_step_limit:
+            self.agent.spacious_direction -= 60
 
     def on_enter_rotating_to_direction(self):
         print("on_enter_roaming~~~~~~~~~~~~~~~~~")
@@ -118,11 +125,14 @@ class ActionStateMachine(StateMachine):
         else:
             self.agent.currentAction = AgentConstants.right
             self.agent.spacious_direction += 1
+# ************************** callbacks for rotate_to_direction end***************************
 
-    def on_roaming(self):
-        self.agent.currentAction = AgentConstants.forward
-        self.agent.roaming_step_n -= 1
-
+# ************************** callbacks for decelerate ***************************
     def on_enter_decelerating(self):
         self.agent.currentAction = AgentConstants.taxi
-# ************************** state callbacks ends***************************
+# ************************** callbacks for decelerate end***************************
+
+# ************************** callbacks for chase ***************************
+    def on_chase(self):
+
+# ************************** callbacks for chase ends ***************************
