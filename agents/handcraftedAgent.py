@@ -16,8 +16,8 @@ class Agent(object):
          WARNING: any path to files you wish to access on the docker should be ABSOLUTE PATHS
         """
 
-        self.t = 0
-        self.step_n = 0
+        self.t = None
+        self.step_n = None
 
         # functional modules
         self.actionStateMachine = ActionStateMachine(self)
@@ -53,29 +53,58 @@ class Agent(object):
         self.currentAction = None
 
         # strategy-related variables
-        self.pirouette_step_n = 0
+        self.pirouette_step_n = None
         self.target_color = None
         self.safest_direction = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
-    def reset(self, t=250):
+    def reset(self, t):
         """
         Reset is called before each episode begins
         Leave blank if nothing needs to happen there
         :param t the number of timesteps in the episode
         """
+
         self.t = t
         self.step_n = 0
-        self.pirouette_step_n = 0
+
+        # functional modules
         self.actionStateMachine.reset()
-        self.currentAction = None
+        self.strategy.reset()
+        self.perception.reset()
+
+        # primitive perception
         self.obs_visual = None
         self.obs_vector = None
         self.obs_visual_h = None
-        self.target_color = None
         self.done = None
         self.reward = None
         self.info = None
+
+        # precess perceptions
+        self.is_green = None
+        self.is_brown = None
+        self.is_red = None
+        self.is_orange = None
+        self.is_yellow = None
+        self.is_target_color = None
+
+        # memory
+        self.visual_h_memory.queue.clear()
+        self.is_green_memory.queue.clear()
+        self.is_brown_memory.queue.clear()
+        self.is_red_memory.queue.clear()
+        self.is_orange_memory.queue.clear()
+        self.is_yellow_memory.queue.clear()
+        self.vector_memory.queue.clear()
+
+        # output action
+        self.currentAction = None
+
+        # strategy-related variables
+        self.pirouette_step_n = None
+        self.target_color = None
+        self.safest_direction = None
 
     def step(self, obs, reward, done, info):
         """
