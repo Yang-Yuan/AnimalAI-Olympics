@@ -4,6 +4,7 @@ import agentUtils
 from ActionStateMachine import ActionStateMachine
 from strategy import Strategy
 from perception import Perception
+from chaser import Chaser
 import AgentConstants
 import queue
 
@@ -23,6 +24,7 @@ class Agent(object):
         self.actionStateMachine = ActionStateMachine(self)
         self.strategy = Strategy(self)
         self.perception = Perception(self)
+        self.chaser = Chaser(self)
 
         # primitive perception
         self.obs_visual = None
@@ -56,6 +58,7 @@ class Agent(object):
         self.pirouette_step_n = None
         self.target_color = None
         self.safest_direction = None
+        self.not_seeing_target_step_n = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t):
@@ -72,6 +75,7 @@ class Agent(object):
         self.actionStateMachine.reset()
         self.strategy.reset()
         self.perception.reset()
+        self.chaser.reset()
 
         # primitive perception
         self.obs_visual = None
@@ -105,6 +109,7 @@ class Agent(object):
         self.pirouette_step_n = None
         self.target_color = None
         self.safest_direction = None
+        self.agent.not_seeing_target_step_n = None
 
     def step(self, obs, reward, done, info):
         """

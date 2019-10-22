@@ -102,7 +102,16 @@ class Strategy(object):
 
             # if the agent is chasing
             elif self.agent.actionStateMachine.is_chasing():
-                pass
+                if self.agent.perception.is_chasing_done():
+                    self.agent.actionStateMachine.decelerate()
+                    break
+                else:
+                    if self.agent.not_seeing_target_step_n < AgentConstants.not_seeing_target_step_limit:
+                        self.agent.actionStateMachine.hold()
+                        break
+                    else:
+                        self.agent.actionStateMachine.decelerate()
+                        break
 
             # if the agent is decelerating
             elif self.agent.actionStateMachine.is_decelerating():

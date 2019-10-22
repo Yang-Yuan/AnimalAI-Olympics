@@ -2,6 +2,7 @@ from statemachine import StateMachine, State
 import AgentConstants
 import numpy as np
 import warnings
+import sys
 
 
 class ActionStateMachine(StateMachine):
@@ -131,8 +132,21 @@ class ActionStateMachine(StateMachine):
 
     # ************************** callbacks for chase ***************************
     def on_chase(self):
-        self.agent.target_color
+        print("on_chase~~~~~~~~~~~~~~~~~")
+        self.agent.not_seeing_target_step_n = 0
+        if self.agent.target_color == "green":
+            self.agent.is_color = self.agent.is_green
+        elif self.agent.is_color == "brown":
+            self.agent.is_color = self.agent.is_brown
+        else:
+            warnings.warn("unknown target_color: {}".format(self.agent.target_color))
+            sys.exit(1)
 
     def on_chasing(self):
-        pass
+        if self.agent.is_color.any():
+            self.agent.not_seeing_target_step_n = 0
+            self.agent.chaser.chase()
+        else:
+            self.agent.not_seeing_target_step_n += 1
+            self.agent.chaser.chase_in_dark()
     # ************************** callbacks for chase ends ***************************

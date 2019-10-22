@@ -81,14 +81,20 @@ class Perception(object):
 
         if self.agent.target_color == "green" and self.agent.is_brown.any():
             self.agent.target_color = "brown"
+            self.agent.is_target_color = self.agent.is_brown
             return True
 
         if self.agent.target_color is None and self.agent.is_green.any():
             self.agent.target_color = "green"
+            self.agent.is_target_color = self.agent.is_green
             return True
 
         if self.agent.target_color is None and self.agent.is_brown.any():
             self.agent.target_color = "brown"
+            self.agent.is_target_color = self.agent.is_brown
             return True
 
         return False
+
+    def is_chasing_done(self):
+        return self.agent.reward is not None and self.agent.reward > 0

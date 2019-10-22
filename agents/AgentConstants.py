@@ -33,6 +33,7 @@ aim_error_limit = 5
 size_limit = 5
 hl = 2
 pirouette_step_limit = 60
+not_seeing_target_step_limit = 60
 roam_step_limit = 10
 red_pixel_on_road_limit = 882
 
