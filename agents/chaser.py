@@ -6,6 +6,7 @@ from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import warnings
 import agentUtils
+from bresenham import bresenham
 
 
 class Chaser(object):
@@ -30,11 +31,11 @@ class Chaser(object):
         target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
         target_size = sizes[target_label - 1]
 
-        grid = Grid(np.logical_not(self.agent.is_red))
-        start = grid.node(AgentConstants.standpoint[0], AgentConstants.standpoint[1])
-        end = grid.node(target_center[0], target_center[1])
-        finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
-        path, runs = finder.find_path(start, end, grid)
+        # grid = Grid(np.logical_not(self.agent.is_red))
+        # start = grid.node(AgentConstants.standpoint[0], AgentConstants.standpoint[1])
+        # end = grid.node(target_center[0], target_center[1])
+        # finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        # path, runs = finder.find_path(start, end, grid)
 
         critical_points_in_path = [AgentConstants.standpoint, target_center]
 
@@ -72,7 +73,7 @@ class Chaser(object):
                     break
 
             if new_idx is not None:
-                for jj in np.arange(start = ii, end = len(line_idx)):
+                for jj in np.arange(start=ii, end=len(line_idx)):
                     insert_idx = None
                     try:
                         insert_idx = critical_points_in_path.index(line_idx[jj])
@@ -83,7 +84,41 @@ class Chaser(object):
                         line_idx = agentUtils.render_line_segments(critical_points_in_path)
             else:
                 warnings.warn("Cannot find a path to the target.")
+                # TODO
 
-        self.generate_action(line_idx)
+        self.generate_action(critical_points_in_path)
+
+    def generate_action(self, critical_points, target_center, target_size):
+
+        start = critical_points[0]
+        end = None
+        for point in critical_points[1:]:
+            line_seg_idx = tuple(np.array(list(bresenham(start[0], start[1],
+                                                         point[0], point[1]))).transpose())
+            line_seg_is_red = self.agent.is_red[line_seg_idx]
+            if line_seg_is_red.any():
+                end = point
+            else:
+                break
+
+        vec = np.array(end) - np.array(end)
 
 
+
+        if diff_center[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+            if target_size < AgentConstants.size_limit:
+                self.pirouette_step_n = 0
+                return [1, 2]
+            else:
+                self.pirouette_step_n += 1
+                return [0, 2]
+        elif diff_center[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+            if target_size < AgentConstants.size_limit:
+                self.pirouette_step_n = 0
+                return [1, 1]
+            else:
+                self.pirouette_step_n += 1
+                return [0, 1]
+        else:
+            self.pirouette_step_n = 0
+            return [1, 0]

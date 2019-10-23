@@ -134,48 +134,11 @@ class Agent(object):
         self.reward = reward
         self.info = info
 
-        # perceive atop primitive observations
+        # set high-level observations
         self.perception.perceive()
 
-        # run strategy
+        # set action by running strategy
         self.strategy.run_strategy()
 
         return self.currentAction
 
-        diff_green = abs(obs_visual_h - AgentConstants.predefined_colors_h.get("green"))
-        is_green = diff_green < AgentConstants.color_diff_limit
-
-        self.step_n += 1
-
-        if not is_green.any():
-            self.pirouette_step_n += 1
-            return [0, 1]
-
-        if 1 == is_green.sum():
-            diff_center = np.array(np.where(is_green)).transpose()[0] - AgentConstants.center_of_view
-            target_size = 1
-        else:
-            labels, label_num = measure.label(input=is_green, background=False, return_num=True, connectivity=1)
-            sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-            target_label = np.argmax(sizes) + 1
-            center_of_target = np.array(np.where(labels == target_label)).mean(axis=1)
-            diff_center = center_of_target - AgentConstants.center_of_view
-            target_size = sizes[target_label - 1]
-
-        if diff_center[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
-            if target_size < AgentConstants.size_limit:
-                self.pirouette_step_n = 0
-                return [1, 2]
-            else:
-                self.pirouette_step_n += 1
-                return [0, 2]
-        elif diff_center[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
-            if target_size < AgentConstants.size_limit:
-                self.pirouette_step_n = 0
-                return [1, 1]
-            else:
-                self.pirouette_step_n += 1
-                return [0, 1]
-        else:
-            self.pirouette_step_n = 0
-            return [1, 0]
