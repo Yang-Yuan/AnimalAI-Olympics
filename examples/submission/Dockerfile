@@ -41,6 +41,7 @@ RUN pip install animalai-train
 RUN pip install numpy
 RUN pip install scipy
 RUN pip install scikit-image
+RUN pip install bresenham
 
 
 ########################################################################################################################

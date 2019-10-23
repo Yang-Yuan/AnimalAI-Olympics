@@ -134,7 +134,7 @@ class Agent(object):
         self.reward = reward
         self.info = info
 
-        # perceive atop primtive observations
+        # perceive atop primitive observations
         self.perception.perceive()
 
         # run strategy

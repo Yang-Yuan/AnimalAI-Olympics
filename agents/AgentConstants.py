@@ -36,6 +36,7 @@ pirouette_step_limit = 60
 not_seeing_target_step_limit = 60
 roam_step_limit = 10
 red_pixel_on_road_limit = 882
+standpoint = [83, 41]
 
 # actions
 taxi = [0, 0]
