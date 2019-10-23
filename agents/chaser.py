@@ -1,7 +1,11 @@
 from skimage import measure
 import numpy as np
 import AgentConstants
-from bresenham import bresenham
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
+import warnings
+import agentUtils
 
 
 class Chaser(object):
@@ -15,7 +19,7 @@ class Chaser(object):
         self.chase_internal(self.newest_is_color)
 
     def chase_in_dark(self):
-        imaginary_is_color = self.newest_is_color # TODO enhance
+        imaginary_is_color = self.newest_is_color  # TODO enhance
         self.chase_internal(imaginary_is_color)
 
     def chase_internal(self, is_color):
@@ -26,10 +30,60 @@ class Chaser(object):
         target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
         target_size = sizes[target_label - 1]
 
-        line_idx = tuple(np.array(list(bresenham(AgentConstants.standpoint[0], AgentConstants.standpoint[1],
-                         target_center[0], target_center[1]))))
+        grid = Grid(np.logical_not(self.agent.is_red))
+        start = grid.node(AgentConstants.standpoint[0], AgentConstants.standpoint[1])
+        end = grid.node(target_center[0], target_center[1])
+        finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        path, runs = finder.find_path(start, end, grid)
 
-        while not self.agent.is_red[line_idx].any():
-            pass
+        critical_points_in_path = [AgentConstants.standpoint, target_center]
+
+        line_idx = agentUtils.render_line_segments(critical_points_in_path)
+
+        line_is_red = self.agent.is_red[tuple(line_idx.transpose())]
+        while not line_is_red.any():
+
+            idx_idx = np.argwhere(line_is_red).flatten()
+
+            for ii in idx_idx:
+
+                red_pixel_idx = line_idx[ii]
+                new_idx = None
+                delta = 1
+                while True:
+                    if (not self.agent.is_red[red_pixel_idx[0] + delta, red_pixel_idx[1]]) \
+                            and (line_idx == [red_pixel_idx[0] + delta, red_pixel_idx[1]]).sum(axis=1).any():
+                        new_idx = [red_pixel_idx[0] + delta, red_pixel_idx[1]]
+                        break
+                    if (not self.agent.is_red[red_pixel_idx[0] - delta, red_pixel_idx[1]]) \
+                            and (line_idx == [red_pixel_idx[0] - delta, red_pixel_idx[1]]).sum(axis=1).any():
+                        new_idx = [red_pixel_idx[0] - delta, red_pixel_idx[1]]
+                        break
+                    if (not self.agent.is_red[red_pixel_idx[0], red_pixel_idx[1] + delta]) \
+                            and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] + delta]).sum(axis=1).any():
+                        new_idx = [red_pixel_idx[0], red_pixel_idx[1] + delta]
+                        break
+                    if (not self.agent.is_red[red_pixel_idx[0], red_pixel_idx[1] - delta]) \
+                            and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] - delta]).sum(axis=1).any():
+                        new_idx = [red_pixel_idx[0], red_pixel_idx[1] - delta]
+                        break
+
+                if new_idx is not None:
+                    break
+
+            if new_idx is not None:
+                for jj in np.arange(start = ii, end = len(line_idx)):
+                    insert_idx = None
+                    try:
+                        insert_idx = critical_points_in_path.index(line_idx[jj])
+                    except ValueError:
+                        pass
+                    if insert_idx is not None:
+                        critical_points_in_path.insert(insert_idx, new_idx)
+                        line_idx = agentUtils.render_line_segments(critical_points_in_path)
+            else:
+                warnings.warn("Cannot find a path to the target.")
 
         self.generate_action(line_idx)
+
+

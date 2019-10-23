@@ -1,4 +1,5 @@
 import numpy as np
+from bresenham import bresenham
 
 
 def toHue(rgb):
@@ -33,3 +34,14 @@ def toHue(rgb):
     return out_h
 
 
+def render_line_segments(critical_points):
+    line_idx = list()
+    for kk in np.arange(len(critical_points) - 1):
+        new_list = list(bresenham(critical_points[kk][0], critical_points[kk][1],
+                                  critical_points[kk + 1][0], critical_points[kk + 1][1]))
+        if kk == len(critical_points) - 2:
+            line_idx = line_idx + new_list
+        else:
+            line_idx = line_idx + new_list[: -1]
+
+    return line_idx

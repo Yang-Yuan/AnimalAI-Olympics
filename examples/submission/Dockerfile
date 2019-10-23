@@ -42,6 +42,7 @@ RUN pip install numpy
 RUN pip install scipy
 RUN pip install scikit-image
 RUN pip install bresenham
+RUN pip install pathfinding
 
 
 ########################################################################################################################
