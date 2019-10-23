@@ -1,7 +1,7 @@
 import AgentConstants
 import numpy as np
 import warnings
-
+from skimage import measure
 
 class Perception(object):
 
@@ -35,6 +35,7 @@ class Perception(object):
             "orange")) < AgentConstants.color_diff_limit
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "yellow")) < AgentConstants.color_diff_limit
+        self.agent.is_inaccessible = self.synthesize_is_inaccessible()
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
@@ -51,10 +52,16 @@ class Perception(object):
         return (self.agent.obs_vector == 0).all()
 
     def is_found(self):
-        if self.agent.target_color == "green":
-            return self.agent.is_green.any()
-        elif self.agent.target_color == "brown":
-            return self.agent.is_brown.any()
+        if self.agent.target_color == "green" and self.agent.is_green.any():
+            self.agent.target_color = "green"
+            self.agent.is_target_color = self.agent.is_green
+            return True
+        elif self.agent.target_color == "brown" and self.agent.is_brown.any():
+            self.agent.target_color = "brown"
+            self.agent.is_target_color = self.agent.is_brown
+            return True
+        else:
+            return False
 
     def renew_target_from_panorama(self):
 
@@ -98,3 +105,28 @@ class Perception(object):
 
     def is_chasing_done(self):
         return self.agent.reward is not None and self.agent.reward > 0
+
+    def synthesize_is_inaccessible(self):
+        # TODO maybe add the walls here, but...
+        is_inaccessible = np.copy(self.agent.is_red)
+        is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
+        return is_inaccessible
+
+    def find_reachable_object(self):
+        labels, label_num = measure.label(input=self.agent.is_color, background=False, return_num=True, connectivity=1)
+        sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
+
+        lowest_idx = None
+        for ii in np.argsort(sizes)[::-1]:
+            label = ii + 1
+            idx = np.argwhere(labels = label)
+            idx_idx = idx.argmax(axis = 0)[1]
+            lowest_idx = idx[idx_idx]
+
+        is_stand
+
+        target_label = np.argmax(sizes) + 1
+        target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
+        target_size = sizes[target_label - 1]
+
+        return target_center, target_size

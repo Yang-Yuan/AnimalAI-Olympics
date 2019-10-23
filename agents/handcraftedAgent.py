@@ -32,13 +32,16 @@ class Agent(object):
         self.reward = None
         self.info = None
 
-        # precess perceptions
+        # high-level perceptions
         self.is_green = None
         self.is_brown = None
         self.is_red = None
         self.is_orange = None
         self.is_yellow = None
         self.is_target_color = None
+        self.is_inaccessible = None
+        self.reachable_target_idx = None
+        self.reachable_target_size = None
 
         # memory
         self.visual_h_memory = queue.Queue(maxsize = AgentConstants.memory_size)
@@ -83,13 +86,16 @@ class Agent(object):
         self.reward = None
         self.info = None
 
-        # precess perceptions
+        # high-level perceptions
         self.is_green = None
         self.is_brown = None
         self.is_red = None
         self.is_orange = None
         self.is_yellow = None
         self.is_target_color = None
+        self.is_inaccessible = None
+        self.reachable_target_idx = None
+        self.reachable_target_size = None
 
         # memory
         self.visual_h_memory.queue.clear()
