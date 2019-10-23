@@ -13,43 +13,39 @@ class Chaser(object):
 
     def __init__(self, agent):
         self.agent = agent
-        self.newest_is_color = None
+        self.newest_target_center = None
+        self.newest_target_size = None
 
     def chase(self):
-        self.newest_is_color = self.agent.is_color
-        self.chase_internal(self.newest_is_color)
+
+        self.newest_target_center, self.newest_target_size = self.find_reachable_object()
+
+        if self.newest_target_center is None:
+            return
+
+        self.chase_internal(self.newest_target_center, self.newest_target_size)
 
     def chase_in_dark(self):
-        imaginary_is_color = self.newest_is_color  # TODO enhance
-        self.chase_internal(imaginary_is_color)
+        imaginary_target_center, imaginary_target_size = self.imagine_chasable_object()
 
-    def chase_internal(self, is_color):
+        self.chase_internal(imaginary_target_center, imaginary_target_size)
 
-        labels, label_num = measure.label(input=is_color, background=False, return_num=True, connectivity=1)
-        sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-        target_label = np.argmax(sizes) + 1
-        target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
-        target_size = sizes[target_label - 1]
-
-        # grid = Grid(np.logical_not(self.agent.is_red))
-        # start = grid.node(AgentConstants.standpoint[0], AgentConstants.standpoint[1])
-        # end = grid.node(target_center[0], target_center[1])
-        # finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
-        # path, runs = finder.find_path(start, end, grid)
+    def chase_internal(self, target_center, target_size):
 
         critical_points_in_path = [AgentConstants.standpoint, target_center]
 
         line_idx = agentUtils.render_line_segments(critical_points_in_path)
 
         line_is_red = self.agent.is_red[tuple(line_idx.transpose())]
+
         while not line_is_red.any():
 
             idx_idx = np.argwhere(line_is_red).flatten()
 
+            new_idx = None
             for ii in idx_idx:
 
                 red_pixel_idx = line_idx[ii]
-                new_idx = None
                 delta = 1
                 while True:
                     if (not self.agent.is_red[red_pixel_idx[0] + delta, red_pixel_idx[1]]) \
@@ -84,9 +80,10 @@ class Chaser(object):
                         line_idx = agentUtils.render_line_segments(critical_points_in_path)
             else:
                 warnings.warn("Cannot find a path to the target.")
-                # TODO
+                return False
 
-        self.generate_action(critical_points_in_path)
+        self.agent.currentAction = self.generate_action(critical_points_in_path, target_center, target_size)
+        return True
 
     def generate_action(self, critical_points, target_center, target_size):
 
@@ -101,24 +98,52 @@ class Chaser(object):
             else:
                 break
 
-        vec = np.array(end) - np.array(end)
+        if target_center != end:
+            target_size = AgentConstants.size_limit
 
+        direction_vec = np.array(end) - np.array(start)
 
-
-        if diff_center[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+        if direction_vec[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
-                self.pirouette_step_n = 0
-                return [1, 2]
+                return AgentConstants.forward_left
             else:
-                self.pirouette_step_n += 1
-                return [0, 2]
-        elif diff_center[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+                return AgentConstants.left
+        elif direction_vec[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
-                self.pirouette_step_n = 0
-                return [1, 1]
+                return AgentConstants.right
             else:
-                self.pirouette_step_n += 1
-                return [0, 1]
+                return AgentConstants.right
         else:
-            self.pirouette_step_n = 0
-            return [1, 0]
+            return AgentConstants.forward
+
+    def synthesize_is_inaccessible(self):
+        # TODO maybe add the walls here, but...
+        is_inaccessible = np.copy(self.agent.is_red)
+        is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
+        return is_inaccessible
+
+    def find_reachable_object(self):
+        labels, label_num = measure.label(input=self.agent.is_color, background=False, return_num=True, connectivity=1)
+        sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
+
+        target_center = None
+        for ii in np.argsort(sizes)[::-1]:
+            label = ii + 1
+            idx = np.argwhere(labels = label)
+            idx_idx = idx.argmax(axis = 0)[1]
+            lowest_idx = idx[idx_idx]
+
+
+        target_label = np.argmax(sizes) + 1
+        target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
+        target_size = sizes[target_label - 1]
+
+        return target_center, target_size
+
+    def imagine_chasable_object(self):
+
+        target_center = AgentConstants.frame_idx[
+            np.argmin(abs(AgentConstants.frame_idx - self.newest_target_center).sum(axis=1))]
+        target_size = 1
+
+        return target_center, target_size

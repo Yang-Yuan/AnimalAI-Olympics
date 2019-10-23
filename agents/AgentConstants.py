@@ -26,7 +26,12 @@ for delta, ii in zip(np.arange(resolution / 2, dtype = int),
                      np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
     for jj in np.arange(start = 0 + delta, stop = resolution - delta, dtype = int):
         road_mask[ii, jj] = True
-
+frame_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
+frame_mask[0, :] = True
+frame_mask[resolution, :] = True
+frame_mask[:, 0] = True
+frame_mask[:, resolution] = True
+frame_idx = np.argwhere(frame_mask)
 
 # Control constants
 aim_error_limit = 5
@@ -44,4 +49,7 @@ right = [0, 1]
 left = [0, 2]
 forward = [1, 0]
 backward = [2, 0]
+forward_left = [1, 2]
+forward_right = [1, 1]
+
 

@@ -1,5 +1,3 @@
-import numpy as np
-from skimage import measure
 import agentUtils
 from ActionStateMachine import ActionStateMachine
 from strategy import Strategy

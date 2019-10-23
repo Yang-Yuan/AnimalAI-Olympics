@@ -142,7 +142,7 @@ class ActionStateMachine(StateMachine):
             warnings.warn("unknown target_color: {}".format(self.agent.target_color))
             sys.exit(1)
 
-    def on_chasing(self):
+    def on_enter_chasing(self):
         if self.agent.is_color.any():
             self.agent.not_seeing_target_step_n = 0
             self.agent.chaser.chase()
