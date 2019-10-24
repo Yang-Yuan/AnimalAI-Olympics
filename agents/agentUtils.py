@@ -1,7 +1,6 @@
 import numpy as np
 from bresenham import bresenham
 from skimage import measure
-import AgentConstants
 
 
 def toHue(rgb):
@@ -49,9 +48,9 @@ def render_line_segments(critical_points):
     return line_idx
 
 
-def is_color_significant(is_color):
-    labels, label_num = measure.label(input=self.agent.is_color,
+def is_color_significant(is_color, significant_size):
+    labels, label_num = measure.label(input=is_color,
                                       background=False,
                                       return_num=True, connectivity=1)
     sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-    return sizes.min() > AgentConstants.size_limit
+    return min(sizes) > significant_size

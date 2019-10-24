@@ -32,7 +32,7 @@ class Perception(object):
         self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "brown")) < AgentConstants.brown_tolerance
         self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(
-            self.agent.is_brown) else AgentConstants.all_false
+            self.agent.is_brown, AgentConstants.size_limit) else AgentConstants.all_false
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "red")) < AgentConstants.red_tolerance
         # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
