@@ -128,3 +128,6 @@ class Strategy(object):
             else:
                 warnings.warn("An unknown state: {}".format(self.agent.actionStateMachine.current_state))
                 sys.exit(1)
+
+    def reset(self):
+        pass

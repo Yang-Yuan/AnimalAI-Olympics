@@ -19,23 +19,23 @@ class Perception(object):
             self.agent.is_brown_memory.get()
         if self.agent.is_red_memory.full():
             self.agent.is_red_memory.get()
-        if self.agent.is_orange_memory.full():
-            self.agent.is_orange_memory.get()
+        # if self.agent.is_orange_memory.full():
+        #     self.agent.is_orange_memory.get()
         if self.agent.is_yellow_memory.full():
             self.agent.is_yellow_memory.get()
         if self.agent.vector_memory.full():
             self.agent.vector_memory.get()
 
         self.agent.is_green = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "green")) < AgentConstants.color_diff_limit
+            "green")) < AgentConstants.green_tolerance
         self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "brown")) < AgentConstants.color_diff_limit
+            "brown")) < AgentConstants.brown_tolerance
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "red")) < AgentConstants.color_diff_limit
-        self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "orange")) < AgentConstants.color_diff_limit
+            "red")) < AgentConstants.red_tolerance
+        # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
+        #     "orange")) < AgentConstants.orange_tolerance
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "yellow")) < AgentConstants.color_diff_limit
+            "yellow")) < AgentConstants.yellow_tolerance
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
         self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
 
@@ -43,7 +43,7 @@ class Perception(object):
         self.agent.is_green_memory.put(self.agent.is_green)
         self.agent.is_brown_memory.put(self.agent.is_brown)
         self.agent.is_red_memory.put(self.agent.is_red)
-        self.agent.is_orange_memory.put(self.agent.is_orange)
+        # self.agent.is_orange_memory.put(self.agent.is_orange)
         self.agent.is_yellow_memory.put(self.agent.is_yellow)
         self.agent.vector_memory.put(self.agent.obs_vector)
 
@@ -148,3 +148,6 @@ class Perception(object):
                 return lowest_idx, sizes[ii]
 
         return None, None
+
+    def reset(self):
+        pass

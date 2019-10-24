@@ -117,3 +117,7 @@ class Chaser(object):
         target_size = 1
 
         return target_center, target_size
+
+    def reset(self):
+        self.newest_target_idx = None
+        self.newest_target_size = None

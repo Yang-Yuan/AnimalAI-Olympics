@@ -36,7 +36,7 @@ class Agent(object):
         self.is_green = None
         self.is_brown = None
         self.is_red = None
-        self.is_orange = None
+        # self.is_orange = None
         self.is_yellow = None
         self.target_color = None
         self.is_target_color = None
@@ -49,7 +49,7 @@ class Agent(object):
         self.is_green_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.is_brown_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.is_red_memory = queue.Queue(maxsize = AgentConstants.memory_size)
-        self.is_orange_memory = queue.Queue(maxsize = AgentConstants.memory_size)
+        # self.is_orange_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.is_yellow_memory = queue.Queue(maxsize = AgentConstants.memory_size)
         self.vector_memory = queue.Queue(maxsize = AgentConstants.memory_size)
 
@@ -61,7 +61,7 @@ class Agent(object):
         self.target_color = None
         self.safest_direction = None
         self.not_seeing_target_step_n = None
-        self.agent.chase_failed = None
+        self.chase_failed = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t):
@@ -92,7 +92,7 @@ class Agent(object):
         self.is_green = None
         self.is_brown = None
         self.is_red = None
-        self.is_orange = None
+        # self.is_orange = None
         self.is_yellow = None
         self.target_color = None
         self.is_target_color = None
@@ -105,7 +105,7 @@ class Agent(object):
         self.is_green_memory.queue.clear()
         self.is_brown_memory.queue.clear()
         self.is_red_memory.queue.clear()
-        self.is_orange_memory.queue.clear()
+        # self.is_orange_memory.queue.clear()
         self.is_yellow_memory.queue.clear()
         self.vector_memory.queue.clear()
 
@@ -113,11 +113,11 @@ class Agent(object):
         self.currentAction = None
 
         # strategy-related variables
-        self.pirouette_step_n = None
+        self.pirouette_step_n = 0
         self.target_color = None
         self.safest_direction = None
-        self.agent.not_seeing_target_step_n = None
-        self.agent.chase_failed = None
+        self.not_seeing_target_step_n = None
+        self.chase_failed = None
 
     def step(self, obs, reward, done, info):
         """

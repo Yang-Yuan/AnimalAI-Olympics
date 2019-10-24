@@ -85,6 +85,7 @@ class ActionStateMachine(StateMachine):
         self.agent.roaming_step_n = np.random.randint(low=1, high=AgentConstants.roam_step_limit)
 
     def on_roaming(self):
+        print("on_roaming~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.forward
         self.agent.roaming_step_n -= 1
 
@@ -126,6 +127,7 @@ class ActionStateMachine(StateMachine):
 
     # ************************** callbacks for decelerate ***************************
     def on_enter_decelerating(self):
+        print("on_enter_decelerating~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.taxi
 
     # ************************** callbacks for decelerate end***************************
@@ -137,6 +139,7 @@ class ActionStateMachine(StateMachine):
         self.agent.chase_failed = False
 
     def on_enter_chasing(self):
+        print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")
         if self.agent.reachable_target_idx is None:
             self.agent.not_seeing_target_step_n += 1
             self.agent.chaser.chase_in_dark()

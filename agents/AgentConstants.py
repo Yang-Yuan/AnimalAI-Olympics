@@ -20,7 +20,15 @@ default_test_length = 1000
 
 # Perception limits of colors
 memory_size = 60
-color_diff_limit = 0.075  # TODO different limits for different object
+green_tolerance = 0.06510537801131308
+brown_tolerance = 0.002229215708910319
+red_tolerance = 0.03996598639455783
+orange_tolerance = 0.003284771042431224
+box_dark_tolerance = 0.002362055933484493
+box_light_tolerance = 0.002362055933484493
+UL_tolerance = 0.002229215708910319
+yellow_tolerance = 0.0037600991284689814
+
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 for delta, ii in zip(np.arange(resolution / 2, dtype = int),
                      np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
@@ -28,9 +36,9 @@ for delta, ii in zip(np.arange(resolution / 2, dtype = int),
         road_mask[ii, jj] = True
 frame_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 frame_mask[0, :] = True
-frame_mask[resolution, :] = True
+frame_mask[resolution - 1, :] = True
 frame_mask[:, 0] = True
-frame_mask[:, resolution] = True
+frame_mask[:, resolution - 1] = True
 frame_idx = np.argwhere(frame_mask)
 
 # Control constants
