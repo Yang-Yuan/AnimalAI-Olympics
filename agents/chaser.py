@@ -31,11 +31,11 @@ class Chaser(object):
 
         line_idx = agentUtils.render_line_segments(critical_points_in_path)
 
-        line_is_red = self.agent.is_red[tuple(line_idx.transpose())]
+        line_is_inaccessible = self.agent.is_inaccessible[tuple(np.array(line_idx).transpose())]
 
-        while not line_is_red.any():
+        while line_is_inaccessible.any():
 
-            idx_idx = np.argwhere(line_is_red).flatten()
+            idx_idx = np.argwhere(line_is_inaccessible).flatten()
 
             new_idx = None
             for ii in idx_idx:
@@ -79,20 +79,20 @@ class Chaser(object):
 
         self.agent.currentAction = self.generate_action(critical_points_in_path, target_idx, target_size)
 
-    def generate_action(self, critical_points, target_center, target_size):
+    def generate_action(self, critical_points, target_idx, target_size):
 
         start = critical_points[0]
         end = None
         for point in critical_points[1:]:
             line_seg_idx = tuple(np.array(list(bresenham(start[0], start[1],
                                                          point[0], point[1]))).transpose())
-            line_seg_is_red = self.agent.is_red[line_seg_idx]
-            if line_seg_is_red.any():
-                end = point
-            else:
+            line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
+            if line_seg_is_inaccessible.any():
                 break
+            else:
+                end = point
 
-        if target_center != end:
+        if target_idx != end:
             target_size = AgentConstants.size_limit
 
         direction_vec = np.array(end) - np.array(start)
