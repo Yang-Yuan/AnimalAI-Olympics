@@ -49,8 +49,12 @@ def render_line_segments(critical_points):
 
 
 def is_color_significant(is_color, significant_size):
-    labels, label_num = measure.label(input=is_color,
-                                      background=False,
-                                      return_num=True, connectivity=1)
-    sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-    return min(sizes) > significant_size
+    if is_color.any():
+        labels, label_num = measure.label(input=is_color,
+                                          background=False,
+                                          return_num=True, connectivity=1)
+        sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
+        return min(sizes) > significant_size
+    else:
+        return False
+
