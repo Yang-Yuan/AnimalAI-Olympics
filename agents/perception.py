@@ -2,6 +2,7 @@ import AgentConstants
 import numpy as np
 import warnings
 from skimage import measure
+import agentUtils
 
 
 class Perception(object):
@@ -30,6 +31,8 @@ class Perception(object):
             "green")) < AgentConstants.green_tolerance
         self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "brown")) < AgentConstants.brown_tolerance
+        self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(
+            self.agent.is_brown) else AgentConstants.all_false
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "red")) < AgentConstants.red_tolerance
         # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
@@ -62,7 +65,7 @@ class Perception(object):
                 is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
                 if is_yellow.any():
                     self.agent.safest_direction = np.argmax(
-                        [(frame & AgentConstants.road_mask).sum() for frame in self.agent.is_yellow])
+                        [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in self.agent.is_yellow])
                 else:
                     warnings.warn("Nowhere to go, just move forward")
                     self.agent.safest_direction = 0

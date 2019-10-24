@@ -40,6 +40,7 @@ frame_mask[resolution - 1, :] = True
 frame_mask[:, 0] = True
 frame_mask[:, resolution - 1] = True
 frame_idx = np.argwhere(frame_mask)
+all_false = np.full((resolution, resolution), False)
 
 # Control constants
 aim_error_limit = 5
