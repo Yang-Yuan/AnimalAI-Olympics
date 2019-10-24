@@ -93,8 +93,8 @@ class ActionStateMachine(StateMachine):
         print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.pirouette_step_n = 0
 
-    def on_searching(self):
-        print("on_searching~~~~~~~~~~~~~~~~~~~")
+    def on_enter_searching(self):
+        print("on_enter_searching: {}".format(self.agent.pirouette_step_n))
         self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
         self.agent.perception.renew_target_from_panorama()

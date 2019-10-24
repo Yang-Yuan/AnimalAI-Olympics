@@ -65,11 +65,12 @@ class Perception(object):
                 is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
                 if is_yellow.any():
                     self.agent.safest_direction = np.argmax(
-                        [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in self.agent.is_yellow])
+                        [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in is_yellow])
                 else:
                     warnings.warn("Nowhere to go, just move forward")
                     self.agent.safest_direction = 0
-            print("target renewed: {} and {}".format(self.agent.target_color, self.agent.safest_direction))
+            print("target_color renewed: {} and safest_direction renewed: {}".format(self.agent.target_color,
+                                                                                     self.agent.safest_direction))
 
     def renew_target(self):
 
@@ -101,12 +102,10 @@ class Perception(object):
 
     def is_found(self):
         if self.agent.target_color == "green" and self.agent.is_green.any():
-            self.agent.target_color = "green"
             self.agent.is_target_color = self.agent.is_green
             self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
             return True
         elif self.agent.target_color == "brown" and self.agent.is_brown.any():
-            self.agent.target_color = "brown"
             self.agent.is_target_color = self.agent.is_brown
             self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
             return True
@@ -134,20 +133,13 @@ class Perception(object):
                                           return_num=True, connectivity=1)
         sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
 
-        lowest_idx = None
         for ii in np.argsort(sizes)[::-1]:
             label = ii + 1
-            idx = np.argwhere(labels=label)
-            idx_idx = idx.argmax(axis=0)[1]
+            idx = np.argwhere(labels == label)
+            idx_idx = idx.argmax(axis=0)[0]
             lowest_idx = idx[idx_idx]
 
-            is_standing_on_inaccessible = False
-            for delta in np.arange(1, 6):
-                if self.agent.is_inaccessible[lowest_idx[0] + delta, lowest_idx[1]]:
-                    is_standing_on_inaccessible = True
-                    break
-
-            if not is_standing_on_inaccessible:
+            if not self.agent.is_inaccessible[lowest_idx[0] : lowest_idx[0] + 6, lowest_idx[1]].any():
                 return lowest_idx, sizes[ii]
 
         return None, None

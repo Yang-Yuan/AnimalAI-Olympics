@@ -39,7 +39,7 @@ class Strategy(object):
                             self.agent.actionStateMachine.rotate_to_direction()
                             break
                     else:
-                        if self.agent.perception.is_found():
+                        if self.agent.perception.is_found() and self.agent.reachable_target_idx is not None:
                             self.agent.actionStateMachine.chase()
                             break
                         else:
@@ -47,7 +47,7 @@ class Strategy(object):
                             break
 
             # if the agent is rotating_to_direction
-            elif self.agent.actionStateMachine.is_rotating_to_direction():
+            elif self.agent.actionStateMachine.is_rotating_to_direction:
                 if self.agent.safest_direction == 0:
                     self.roam()
                     break
@@ -76,7 +76,7 @@ class Strategy(object):
                         break
 
             # if the agent is searching
-            elif self.agent.actionStateMachine.is_searching():
+            elif self.agent.actionStateMachine.is_searching:
                 if self.agent.perception.is_found() and self.agent.reachable_target_idx is not None:
                     self.agent.actionStateMachine.chase()
                     break
@@ -101,7 +101,7 @@ class Strategy(object):
                                 break
 
             # if the agent is chasing
-            elif self.agent.actionStateMachine.is_chasing():
+            elif self.agent.actionStateMachine.is_chasing:
                 if self.agent.perception.is_chasing_done():
                     self.agent.actionStateMachine.decelerate()
                     break
@@ -116,7 +116,7 @@ class Strategy(object):
                         break
 
             # if the agent is decelerating
-            elif self.agent.actionStateMachine.is_decelerating():
+            elif self.agent.actionStateMachine.is_decelerating:
                 if self.agent.perception.is_static():
                     self.agent.actionStateMachine.pirouette()
                     break
