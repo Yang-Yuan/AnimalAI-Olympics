@@ -38,6 +38,7 @@ class Agent(object):
         self.is_red = None
         self.is_orange = None
         self.is_yellow = None
+        self.target_color = None
         self.is_target_color = None
         self.is_inaccessible = None
         self.reachable_target_idx = None
@@ -60,6 +61,7 @@ class Agent(object):
         self.target_color = None
         self.safest_direction = None
         self.not_seeing_target_step_n = None
+        self.agent.chase_failed = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t):
@@ -92,6 +94,7 @@ class Agent(object):
         self.is_red = None
         self.is_orange = None
         self.is_yellow = None
+        self.target_color = None
         self.is_target_color = None
         self.is_inaccessible = None
         self.reachable_target_idx = None
@@ -114,6 +117,7 @@ class Agent(object):
         self.target_color = None
         self.safest_direction = None
         self.agent.not_seeing_target_step_n = None
+        self.agent.chase_failed = None
 
     def step(self, obs, reward, done, info):
         """

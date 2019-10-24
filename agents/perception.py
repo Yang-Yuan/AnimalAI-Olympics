@@ -3,6 +3,7 @@ import numpy as np
 import warnings
 from skimage import measure
 
+
 class Perception(object):
 
     def __init__(self, agent):
@@ -36,6 +37,7 @@ class Perception(object):
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "yellow")) < AgentConstants.color_diff_limit
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
+        self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
@@ -44,24 +46,6 @@ class Perception(object):
         self.agent.is_orange_memory.put(self.agent.is_orange)
         self.agent.is_yellow_memory.put(self.agent.is_yellow)
         self.agent.vector_memory.put(self.agent.obs_vector)
-
-    def is_front_safe(self):
-        return (self.agent.is_red & AgentConstants.road_mask).sum() < AgentConstants.red_pixel_on_road_limit
-
-    def is_static(self):
-        return (self.agent.obs_vector == 0).all()
-
-    def is_found(self):
-        if self.agent.target_color == "green" and self.agent.is_green.any():
-            self.agent.target_color = "green"
-            self.agent.is_target_color = self.agent.is_green
-            return True
-        elif self.agent.target_color == "brown" and self.agent.is_brown.any():
-            self.agent.target_color = "brown"
-            self.agent.is_target_color = self.agent.is_brown
-            return True
-        else:
-            return False
 
     def renew_target_from_panorama(self):
 
@@ -89,19 +73,42 @@ class Perception(object):
         if self.agent.target_color == "green" and self.agent.is_brown.any():
             self.agent.target_color = "brown"
             self.agent.is_target_color = self.agent.is_brown
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
             return True
 
         if self.agent.target_color is None and self.agent.is_green.any():
             self.agent.target_color = "green"
             self.agent.is_target_color = self.agent.is_green
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
             return True
 
         if self.agent.target_color is None and self.agent.is_brown.any():
             self.agent.target_color = "brown"
             self.agent.is_target_color = self.agent.is_brown
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
             return True
 
         return False
+
+    def is_front_safe(self):
+        return (self.agent.is_red & AgentConstants.road_mask).sum() < AgentConstants.red_pixel_on_road_limit
+
+    def is_static(self):
+        return (self.agent.obs_vector == 0).all()
+
+    def is_found(self):
+        if self.agent.target_color == "green" and self.agent.is_green.any():
+            self.agent.target_color = "green"
+            self.agent.is_target_color = self.agent.is_green
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
+            return True
+        elif self.agent.target_color == "brown" and self.agent.is_brown.any():
+            self.agent.target_color = "brown"
+            self.agent.is_target_color = self.agent.is_brown
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
+            return True
+        else:
+            return False
 
     def is_chasing_done(self):
         return self.agent.reward is not None and self.agent.reward > 0
@@ -112,21 +119,32 @@ class Perception(object):
         is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
         return is_inaccessible
 
-    def find_reachable_object(self):
-        labels, label_num = measure.label(input=self.agent.is_color, background=False, return_num=True, connectivity=1)
+    def find_reachable_target(self):
+
+        if self.agent.target_color is None \
+                or self.agent.is_target_color is None \
+                or not self.agent.is_target_color.any():
+            return None, None
+
+        labels, label_num = measure.label(input=self.agent.is_target_color,
+                                          background=False,
+                                          return_num=True, connectivity=1)
         sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
 
         lowest_idx = None
         for ii in np.argsort(sizes)[::-1]:
             label = ii + 1
-            idx = np.argwhere(labels = label)
-            idx_idx = idx.argmax(axis = 0)[1]
+            idx = np.argwhere(labels=label)
+            idx_idx = idx.argmax(axis=0)[1]
             lowest_idx = idx[idx_idx]
 
-        is_stand
+            is_standing_on_inaccessible = False
+            for delta in np.arange(1, 6):
+                if self.agent.is_inaccessible[lowest_idx[0] + delta, lowest_idx[1]]:
+                    is_standing_on_inaccessible = True
+                    break
 
-        target_label = np.argmax(sizes) + 1
-        target_center = np.array(np.where(labels == target_label)).mean(axis=1).astype(np.int)
-        target_size = sizes[target_label - 1]
+            if not is_standing_on_inaccessible:
+                return lowest_idx, sizes[ii]
 
-        return target_center, target_size
+        return None, None

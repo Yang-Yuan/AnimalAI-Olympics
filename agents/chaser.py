@@ -1,4 +1,3 @@
-
 import numpy as np
 import AgentConstants
 import warnings
@@ -10,26 +9,25 @@ class Chaser(object):
 
     def __init__(self, agent):
         self.agent = agent
-
+        self.newest_target_idx = None
+        self.newest_target_size = None
 
     def chase(self):
 
-        self.newest_target_center, self.newest_target_size = self.find_reachable_object()
+        self.newest_target_idx = self.agent.reachable_target_idx
+        self.newest_target_size = self.agent.reachable_target_size
 
-        if self.newest_target_center is None:
-            return
-
-        self.chase_internal(self.newest_target_center, self.newest_target_size)
+        self.chase_internal(self.newest_target_idx, self.newest_target_size)
 
     def chase_in_dark(self):
 
-        imaginary_target_center, imaginary_target_size = self.imagine_chasable_object()
+        imaginary_target_idx, imaginary_target_size = self.imagine_target()
 
-        self.chase_internal(imaginary_target_center, imaginary_target_size)
+        self.chase_internal(imaginary_target_idx, imaginary_target_size)
 
-    def chase_internal(self, target_center, target_size):
+    def chase_internal(self, target_idx, target_size):
 
-        critical_points_in_path = [AgentConstants.standpoint, target_center]
+        critical_points_in_path = [AgentConstants.standpoint, target_idx]
 
         line_idx = agentUtils.render_line_segments(critical_points_in_path)
 
@@ -76,11 +74,10 @@ class Chaser(object):
                         critical_points_in_path.insert(insert_idx, new_idx)
                         line_idx = agentUtils.render_line_segments(critical_points_in_path)
             else:
-                warnings.warn("Cannot find a path to the target.")
-                return False
+                self.agent.currentAction = AgentConstants.taxi
+                self.agent.chase_failed = True
 
-        self.agent.currentAction = self.generate_action(critical_points_in_path, target_center, target_size)
-        return True
+        self.agent.currentAction = self.generate_action(critical_points_in_path, target_idx, target_size)
 
     def generate_action(self, critical_points, target_center, target_size):
 
@@ -113,7 +110,7 @@ class Chaser(object):
         else:
             return AgentConstants.forward
 
-    def imagine_chasable_object(self):
+    def imagine_target(self):
 
         target_center = AgentConstants.frame_idx[
             np.argmin(abs(AgentConstants.frame_idx - self.newest_target_center).sum(axis=1))]

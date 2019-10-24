@@ -52,7 +52,7 @@ class Strategy(object):
                     self.roam()
                     break
                 else:
-                    if self.agent.perception.renew_target():
+                    if self.agent.perception.renew_target() and self.agent.reachable_target_idx is not None:
                         self.agent.actionStateMachine.chase()
                         break
                     else:
@@ -65,7 +65,7 @@ class Strategy(object):
                     self.agent.actionStateMachine.decelerate()
                     break
                 else:
-                    if self.agent.perception.renew_target():
+                    if self.agent.perception.renew_target() and self.agent.reachable_target_idx is not None:
                         self.agent.actionStateMachine.chase()
                         break
                     elif self.agent.perception.is_front_safe():
@@ -77,7 +77,7 @@ class Strategy(object):
 
             # if the agent is searching
             elif self.agent.actionStateMachine.is_searching():
-                if self.agent.perception.is_found():
+                if self.agent.perception.is_found() and self.agent.reachable_target_idx is not None:
                     self.agent.actionStateMachine.chase()
                     break
                 else:
@@ -93,7 +93,7 @@ class Strategy(object):
                                 self.agent.actionStateMachine.rotate_to_direction()
                                 break
                         else:
-                            if self.agent.perception.is_found():
+                            if self.agent.perception.is_found() and self.agent.reachable_target_idx is not None:
                                 self.agent.actionStateMachine.chase()
                                 break
                             else:
@@ -105,6 +105,8 @@ class Strategy(object):
                 if self.agent.perception.is_chasing_done():
                     self.agent.actionStateMachine.decelerate()
                     break
+                elif self.agent.chase_failed:
+                    self.agent.actionStateMachine.decelerate()
                 else:
                     if self.agent.not_seeing_target_step_n < AgentConstants.not_seeing_target_step_limit:
                         self.agent.actionStateMachine.hold()
