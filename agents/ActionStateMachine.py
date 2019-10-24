@@ -72,9 +72,6 @@ class ActionStateMachine(StateMachine):
         print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
         self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
-
-    def on_exit_pirouetting(self):
-        print("exit_pirouetting~~~~~~~~~~~~~~~~~~")
         self.agent.perception.renew_target_from_panorama()
 
     # ************************** callbacks for pirouette end***************************
@@ -100,9 +97,6 @@ class ActionStateMachine(StateMachine):
         print("on_searching~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
-
-    def on_exit_searching(self):
-        print("on_exit_searching~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.perception.renew_target_from_panorama()
 
     # ************************** callbacks for search ends***************************

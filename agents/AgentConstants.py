@@ -21,12 +21,12 @@ default_test_length = 1000
 # Perception limits of colors
 memory_size = 60
 green_tolerance = 0.06510537801131308
-brown_tolerance = 0.002229215708910319
+brown_tolerance = 0.0005573039272275798
 red_tolerance = 0.03996598639455783
-orange_tolerance = 0.003284771042431224
-box_dark_tolerance = 0.002362055933484493
-box_light_tolerance = 0.002362055933484493
-UL_tolerance = 0.002229215708910319
+# orange_tolerance = 0.003284771042431224
+# box_dark_tolerance = 0.002362055933484493
+# box_light_tolerance = 0.002362055933484493
+# UL_tolerance = 0.002229215708910319
 yellow_tolerance = 0.0037600991284689814
 
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
