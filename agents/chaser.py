@@ -92,10 +92,10 @@ class Chaser(object):
             else:
                 end = point
 
-        if target_idx != end:
+        if (target_idx != end).any():
             target_size = AgentConstants.size_limit
 
-        direction_vec = np.array(end) - np.array(start)
+        direction_vec = end - start
 
         if direction_vec[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
@@ -104,7 +104,7 @@ class Chaser(object):
                 return AgentConstants.left
         elif direction_vec[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
-                return AgentConstants.right
+                return AgentConstants.forward_right
             else:
                 return AgentConstants.right
         else:

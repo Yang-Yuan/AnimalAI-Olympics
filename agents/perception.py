@@ -1,6 +1,7 @@
 import AgentConstants
 import numpy as np
 import warnings
+import sys
 from skimage import measure
 import agentUtils
 
@@ -40,7 +41,7 @@ class Perception(object):
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "yellow")) < AgentConstants.yellow_tolerance
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
-        self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
+        self.update_target(self)
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
@@ -75,22 +76,34 @@ class Perception(object):
     def renew_target(self):
 
         if self.agent.target_color == "green" and self.agent.is_brown.any():
-            self.agent.target_color = "brown"
-            self.agent.is_target_color = self.agent.is_brown
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
-            return True
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_brown)
+            if self.agent.reachable_target_idx is None:
+                return False
+            else:
+                self.agent.target_color = "brown"
+                self.agent.is_target_color = self.agent.is_brown
+                return True
 
         if self.agent.target_color is None and self.agent.is_green.any():
-            self.agent.target_color = "green"
-            self.agent.is_target_color = self.agent.is_green
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
-            return True
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_green)
+            if self.agent.reachable_target_idx is None:
+                return False
+            else:
+                self.agent.target_color = "green"
+                self.agent.is_target_color = self.agent.is_green
+                return True
 
         if self.agent.target_color is None and self.agent.is_brown.any():
-            self.agent.target_color = "brown"
-            self.agent.is_target_color = self.agent.is_brown
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
-            return True
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_brown)
+            if self.agent.reachable_target_idx is None:
+                return False
+            else:
+                self.agent.target_color = "brown"
+                self.agent.is_target_color = self.agent.is_brown
+                return True
 
         return False
 
@@ -102,13 +115,21 @@ class Perception(object):
 
     def is_found(self):
         if self.agent.target_color == "green" and self.agent.is_green.any():
-            self.agent.is_target_color = self.agent.is_green
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
-            return True
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_green)
+            if self.agent.reachable_target_idx is None:
+                return False
+            else:
+                self.agent.is_target_color = self.agent.is_green
+                return True
         elif self.agent.target_color == "brown" and self.agent.is_brown.any():
-            self.agent.is_target_color = self.agent.is_brown
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target()
-            return True
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_brown)
+            if self.agent.reachable_target_idx is None:
+                return False
+            else:
+                self.agent.is_target_color = self.agent.is_brown
+                return True
         else:
             return False
 
@@ -121,28 +142,39 @@ class Perception(object):
         is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
         return is_inaccessible
 
-    def find_reachable_target(self):
+    def find_reachable_target(self, is_color):
+        if is_color.any():
+            labels, label_num = measure.label(input=is_color,
+                                              background=False,
+                                              return_num=True,
+                                              connectivity=1)
+            sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
+            for ii in np.argsort(sizes)[::-1]:
+                label = ii + 1
+                idx = np.argwhere(labels == label)
+                idx_idx = idx.argmax(axis=0)[0]
+                lowest_idx = idx[idx_idx]
 
-        if self.agent.target_color is None \
-                or self.agent.is_target_color is None \
-                or not self.agent.is_target_color.any():
+                if not self.agent.is_inaccessible[lowest_idx[0]: lowest_idx[0] + 6, lowest_idx[1]].any():
+                    return lowest_idx, sizes[ii]
+        else:
             return None, None
 
-        labels, label_num = measure.label(input=self.agent.is_target_color,
-                                          background=False,
-                                          return_num=True, connectivity=1)
-        sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-
-        for ii in np.argsort(sizes)[::-1]:
-            label = ii + 1
-            idx = np.argwhere(labels == label)
-            idx_idx = idx.argmax(axis=0)[0]
-            lowest_idx = idx[idx_idx]
-
-            if not self.agent.is_inaccessible[lowest_idx[0] : lowest_idx[0] + 6, lowest_idx[1]].any():
-                return lowest_idx, sizes[ii]
-
-        return None, None
+    def update_target(self):
+        if self.agent.target_color is None:
+            return
+        else:
+            if self.agent.target_color == "green":
+                self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                    self.agent.is_green)
+                return
+            elif self.agent.target_color == "brown":
+                self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                    self.agent.is_brown)
+                return
+            else:
+                warnings.warn("unkown corlor!!!!!!!!!!!!!!!!!!")
+                sys.exit(1)
 
     def reset(self):
         pass
