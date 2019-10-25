@@ -3,7 +3,7 @@ import numpy as np
 
 # Task-related constants
 predefined_colors = {"green": [0.506, 0.749, 0.255],
-                     "brown": [0.471, 0.337, 0.0471],
+                     "brown": [0.267, 0.188, 0.0118],
                      "red": [0.722, 0.196, 0.196],
                      "orange": [1, 0.675, 0.282],
                      "box_dark": [0.196, 0.165, 0.133],
@@ -21,7 +21,7 @@ default_test_length = 1000
 # Perception limits of colors
 memory_size = 60
 green_tolerance = 0.06510537801131308
-brown_tolerance = 0.0005573039272275798
+brown_tolerance = 0.001
 red_tolerance = 0.03996598639455783
 # orange_tolerance = 0.003284771042431224
 # box_dark_tolerance = 0.002362055933484493

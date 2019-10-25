@@ -25,18 +25,22 @@ from handcraftedAgent import Agent
 #                 '../examples/configs/6-Generalization.yaml',
 #                 '../examples/configs/7-InternalMemory.yaml']
 
-arenaConfigs = ['../configs/1-Food/single-static.yaml',
-                '../configs/1-Food/two-static.yaml',
-                '../configs/1-Food/three-static.yaml',
-                '../configs/1-Food/multi-static.yaml',
-                '../configs/1-Food/single-dynamic.yaml',
-                '../configs/1-Food/two-dynamic.yaml',
-                '../configs/1-Food/three-dynamic.yaml',
-                '../configs/1-Food/multi-dynamic.yaml',
-                '../configs/1-Food/single-mix.yaml',
-                '../configs/1-Food/two-mix.yaml',
-                '../configs/1-Food/three-mix.yaml',
-                '../configs/1-Food/multi-mix.yaml']
+# arenaConfigs = ['../configs/1-Food/single-static.yaml',
+#                 '../configs/1-Food/two-static.yaml',
+#                 '../configs/1-Food/three-static.yaml',
+#                 '../configs/1-Food/multi-static.yaml',
+#                 '../configs/1-Food/single-dynamic.yaml',
+#                 '../configs/1-Food/two-dynamic.yaml',
+#                 '../configs/1-Food/three-dynamic.yaml',
+#                 '../configs/1-Food/multi-dynamic.yaml',
+#                 '../configs/1-Food/single-mix.yaml',
+#                 '../configs/1-Food/two-mix.yaml',
+#                 '../configs/1-Food/three-mix.yaml',
+#                 '../configs/1-Food/multi-mix.yaml']
+
+arenaConfigs = ['../configs/234-POA/poa-1.yaml',
+                '../configs/234-POA/poa-2.yaml',
+                '../configs/234-POA/poa-3.yaml']
 
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)

@@ -30,8 +30,10 @@ class Perception(object):
 
         self.agent.is_green = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "green")) < AgentConstants.green_tolerance
-        self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "brown")) < AgentConstants.brown_tolerance
+        # self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
+        #     "brown")) < AgentConstants.brown_tolerance
+        self.agent.is_brown = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("brown")).max(axis = 2) < AgentConstants.brown_tolerance
+        print(np.argwhere(self.agent.is_brown))
         self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(
             self.agent.is_brown, AgentConstants.size_limit) else AgentConstants.all_false
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(

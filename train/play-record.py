@@ -18,7 +18,7 @@ logger = logging.getLogger("play-record-logger")
 ##################################################
 # Specify the arena config here
 ##################################################
-arenaConfig = '../examples/configs/1-Food.yaml'
+arenaConfig = '../examples/configs/2-Preferences.yaml'
 
 ##################################################
 # Create a folder to store data of this task
