@@ -82,7 +82,6 @@ class Perception(object):
                 return False
             else:
                 self.agent.target_color = "brown"
-                self.agent.is_target_color = self.agent.is_brown
                 return True
 
         if self.agent.target_color is None and self.agent.is_green.any():
@@ -92,7 +91,6 @@ class Perception(object):
                 return False
             else:
                 self.agent.target_color = "green"
-                self.agent.is_target_color = self.agent.is_green
                 return True
 
         if self.agent.target_color is None and self.agent.is_brown.any():
@@ -102,7 +100,6 @@ class Perception(object):
                 return False
             else:
                 self.agent.target_color = "brown"
-                self.agent.is_target_color = self.agent.is_brown
                 return True
 
         return False
@@ -114,24 +111,7 @@ class Perception(object):
         return (self.agent.obs_vector == 0).all()
 
     def is_found(self):
-        if self.agent.target_color == "green" and self.agent.is_green.any():
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
-                self.agent.is_green)
-            if self.agent.reachable_target_idx is None:
-                return False
-            else:
-                self.agent.is_target_color = self.agent.is_green
-                return True
-        elif self.agent.target_color == "brown" and self.agent.is_brown.any():
-            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
-                self.agent.is_brown)
-            if self.agent.reachable_target_idx is None:
-                return False
-            else:
-                self.agent.is_target_color = self.agent.is_brown
-                return True
-        else:
-            return False
+        return self.agent.reachable_target_idx is not None
 
     def is_chasing_done(self):
         return self.agent.reward is not None and self.agent.reward > 0

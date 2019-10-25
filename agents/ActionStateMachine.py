@@ -43,7 +43,7 @@ class ActionStateMachine(StateMachine):
     search = pirouetting.to(searching) | \
              chasing.to(searching)
 
-    chase = searching.to(chasing)
+    chase = searching.to(chasing) | pirouetting.to(chasing) | rotating_to_direction.to(chasing) | roaming.to(chasing)
 
     decelerate = chasing.to(decelerating) | \
                  roaming.to(decelerating)

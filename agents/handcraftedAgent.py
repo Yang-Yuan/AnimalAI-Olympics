@@ -39,7 +39,6 @@ class Agent(object):
         # self.is_orange = None
         self.is_yellow = None
         self.target_color = None
-        self.is_target_color = None
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
@@ -95,7 +94,6 @@ class Agent(object):
         # self.is_orange = None
         self.is_yellow = None
         self.target_color = None
-        self.is_target_color = None
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
