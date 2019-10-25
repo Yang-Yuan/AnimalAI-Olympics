@@ -41,7 +41,7 @@ class Perception(object):
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "yellow")) < AgentConstants.yellow_tolerance
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
-        self.update_target(self)
+        self.update_target()
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
