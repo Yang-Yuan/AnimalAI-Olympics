@@ -10,3 +10,7 @@ arenas:
       rotations: [0, 45]
     - !Item
       name: BadGoal
+    - !Item
+      name: Wall
+      colors:
+        - !RGB {r: 153, g: 153, b: 153}

@@ -112,6 +112,9 @@ class Perception(object):
     def is_static(self):
         return (self.agent.obs_vector == 0).all()
 
+    def is_nearly_static(self):
+        return (abs(self.agent.obs_vector) < 0.1).all()
+
     def is_found(self):
         return self.agent.reachable_target_idx is not None
 

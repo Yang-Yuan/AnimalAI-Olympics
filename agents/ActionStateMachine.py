@@ -79,12 +79,10 @@ class ActionStateMachine(StateMachine):
     # ************************** callbacks for roam ***************************
     def on_roam(self):
         print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.roaming_step_n = np.random.randint(low=1, high=AgentConstants.roam_step_limit)
 
-    def on_roaming(self):
+    def on_enter_roaming(self):
         print("on_roaming~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.forward
-        self.agent.roaming_step_n -= 1
 
     # ************************** callbacks for roam end***************************
 
@@ -104,18 +102,18 @@ class ActionStateMachine(StateMachine):
     # ************************** callbacks for rotate_to_direction ***************************
     def on_rotate_to_direction(self):
         print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
-        if AgentConstants.pirouette_step_limit / 2 <= self.agent.spacious_direction \
+        if AgentConstants.pirouette_step_limit / 2 <= self.agent.safest_direction \
                 < AgentConstants.pirouette_step_limit:
-            self.agent.spacious_direction -= 60
+            self.agent.safest_direction -= 60
 
     def on_enter_rotating_to_direction(self):
-        print("on_enter_roaming~~~~~~~~~~~~~~~~~")
-        if self.agent.spacious_direction > 0:
+        print("on_enter_rotating_to_direction~~~~~~~~~~~~~~~~~")
+        if self.agent.safest_direction > 0:
             self.agent.currentAction = AgentConstants.left
-            self.agent.spacious_direction -= 1
+            self.agent.safest_direction -= 1
         else:
             self.agent.currentAction = AgentConstants.right
-            self.agent.spacious_direction += 1
+            self.agent.safest_direction += 1
 
     # ************************** callbacks for rotate_to_direction end***************************
 

@@ -30,7 +30,7 @@ red_tolerance = 0.03996598639455783
 yellow_tolerance = 0.0037600991284689814
 
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
-for delta, ii in zip(np.arange(resolution / 2, dtype = int),
+for delta, ii in zip(np.repeat(np.arange(resolution / 4), 2),
                      np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
     for jj in np.arange(start = 0 + delta, stop = resolution - delta, dtype = int):
         road_mask[ii, jj] = True

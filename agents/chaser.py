@@ -43,19 +43,19 @@ class Chaser(object):
                 red_pixel_idx = line_idx[ii]
                 delta = 1
                 while True:
-                    if (not self.agent.is_red[red_pixel_idx[0] + delta, red_pixel_idx[1]]) \
+                    if (not self.agent.is_inaccessible[red_pixel_idx[0] + delta, red_pixel_idx[1]]) \
                             and (line_idx == [red_pixel_idx[0] + delta, red_pixel_idx[1]]).sum(axis=1).any():
                         new_idx = [red_pixel_idx[0] + delta, red_pixel_idx[1]]
                         break
-                    if (not self.agent.is_red[red_pixel_idx[0] - delta, red_pixel_idx[1]]) \
+                    if (not self.agent.is_inaccessible[red_pixel_idx[0] - delta, red_pixel_idx[1]]) \
                             and (line_idx == [red_pixel_idx[0] - delta, red_pixel_idx[1]]).sum(axis=1).any():
                         new_idx = [red_pixel_idx[0] - delta, red_pixel_idx[1]]
                         break
-                    if (not self.agent.is_red[red_pixel_idx[0], red_pixel_idx[1] + delta]) \
+                    if (not self.agent.is_inaccessible[red_pixel_idx[0], red_pixel_idx[1] + delta]) \
                             and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] + delta]).sum(axis=1).any():
                         new_idx = [red_pixel_idx[0], red_pixel_idx[1] + delta]
                         break
-                    if (not self.agent.is_red[red_pixel_idx[0], red_pixel_idx[1] - delta]) \
+                    if (not self.agent.is_inaccessible[red_pixel_idx[0], red_pixel_idx[1] - delta]) \
                             and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] - delta]).sum(axis=1).any():
                         new_idx = [red_pixel_idx[0], red_pixel_idx[1] - delta]
                         break
