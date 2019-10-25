@@ -49,7 +49,7 @@ class Strategy(object):
             # if the agent is rotating_to_direction
             elif self.agent.actionStateMachine.is_rotating_to_direction:
                 if self.agent.safest_direction == 0:
-                    self.roam()
+                    self.agent.actionStateMachine.roam()
                     break
                 else:
                     if self.agent.perception.renew_target():

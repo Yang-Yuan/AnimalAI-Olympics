@@ -113,11 +113,11 @@ class Chaser(object):
 
     def imagine_target(self):
 
-        target_center = AgentConstants.frame_idx[
-            np.argmin(abs(AgentConstants.frame_idx - self.newest_target_center).sum(axis=1))]
+        target_idx = AgentConstants.frame_idx[
+            np.argmin(abs(AgentConstants.frame_idx - self.newest_target_idx).sum(axis=1))]
         target_size = 1
 
-        return target_center, target_size
+        return target_idx, target_size
 
     def reset(self):
         self.newest_target_idx = None

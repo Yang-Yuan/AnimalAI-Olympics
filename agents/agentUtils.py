@@ -54,7 +54,7 @@ def is_color_significant(is_color, significant_size):
                                           background=False,
                                           return_num=True, connectivity=1)
         sizes = [(labels == label).sum() for label in range(1, label_num + 1)]
-        return min(sizes) > significant_size
+        return max(sizes) > significant_size
     else:
         return False
 

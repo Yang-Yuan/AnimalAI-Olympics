@@ -7,5 +7,6 @@ arenas:
       name: GoodGoal
     - !Item
       name: GoodGoalMulti
+      rotations: [0, 45]
     - !Item
       name: BadGoal
