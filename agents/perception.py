@@ -123,8 +123,7 @@ class Perception(object):
 
     def synthesize_is_inaccessible(self):
         # TODO maybe add the walls here, but...
-        is_inaccessible = np.copy(self.agent.is_red)
-        is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
+        is_inaccessible = np.logical_and(self.agent.is_red, np.logical_not(AgentConstants.frame_mask))
         return is_inaccessible
 
     def find_reachable_target(self, is_color):

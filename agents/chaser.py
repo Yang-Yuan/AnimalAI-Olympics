@@ -3,6 +3,10 @@ import AgentConstants
 import warnings
 import agentUtils
 from bresenham import bresenham
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
+# from pathfinding.finder.dijkstra import DijkstraFinder
 
 
 class Chaser(object):
@@ -11,6 +15,8 @@ class Chaser(object):
         self.agent = agent
         self.newest_target_idx = None
         self.newest_target_size = None
+        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
 
@@ -27,74 +33,18 @@ class Chaser(object):
 
     def chase_internal(self, target_idx, target_size):
 
-        critical_points_in_path = [AgentConstants.standpoint, target_idx.tolist()]
+        grid = Grid(matrix = np.logical_not(self.agent.is_inaccessible))
+        start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])
+        end = grid.node(target_idx[1], target_idx[0])
+        path, _ = self.finder.find_path(start, end, grid)
 
-        line_idx = agentUtils.render_line_segments(critical_points_in_path)
+        if path is None or 0 == len(path):
+            warnings.warn("Can't find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
 
-        line_is_inaccessible = self.agent.is_inaccessible[tuple(np.array(line_idx).transpose())]
-
-        while line_is_inaccessible.any():
-
-            idx_idx = np.argwhere(line_is_inaccessible).flatten()
-
-            new_idx = None
-            for ii in idx_idx:
-
-                inaccessible_pixel_idx = line_idx[ii]
-                delta = 1
-                while delta < AgentConstants.resolution:
-                    idx0 = inaccessible_pixel_idx[0] + delta
-                    idx1 = inaccessible_pixel_idx[1]
-                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
-                        new_idx = [idx0, idx1]
-                        break
-                    idx0 = inaccessible_pixel_idx[0] - delta
-                    idx1 = inaccessible_pixel_idx[1]
-                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
-                        new_idx = [idx0, idx1]
-                        break
-                    idx0 = inaccessible_pixel_idx[0]
-                    idx1 = inaccessible_pixel_idx[1] + delta
-                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
-                        new_idx = [idx0, idx1]
-                        break
-                    idx0 = inaccessible_pixel_idx[0]
-                    idx1 = inaccessible_pixel_idx[1] - delta
-                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
-                        new_idx = [idx0, idx1]
-                        break
-                    delta += 1
-
-                if new_idx is not None:
-                    break
-
-            if new_idx is not None:
-                for jj in np.arange(start=ii, stop=len(line_idx)):
-                    insert_idx = None
-                    try:
-                        insert_idx = critical_points_in_path.index(list(line_idx[jj]))
-                    except ValueError:
-                        pass
-                    if insert_idx is not None:
-                        critical_points_in_path.insert(insert_idx, new_idx)
-                        line_idx = agentUtils.render_line_segments(critical_points_in_path)
-                        if len(line_idx) != len(set(line_idx)):
-                            warnings.warn("Cannot find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                            self.agent.currentAction = AgentConstants.taxi
-                            self.agent.chase_failed = True
-                            return
-                        line_is_inaccessible = self.agent.is_inaccessible[tuple(np.array(line_idx).transpose())]
-                        break
-
-            else:
-                warnings.warn(
-                    "This branch wasn't supposed to be reached because of the trick of frame. Something must be "
-                    "wrong!!!!!!!!!!!!!!!!")
-                self.agent.currentAction = AgentConstants.taxi
-                self.agent.chase_failed = True
-                return
-
-        self.agent.currentAction = self.generate_action(critical_points_in_path, target_idx, target_size)
+        self.agent.currentAction = self.generate_action(path, target_idx, target_size)
 
     def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
         return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
