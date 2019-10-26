@@ -27,7 +27,7 @@ class Chaser(object):
 
     def chase_internal(self, target_idx, target_size):
 
-        critical_points_in_path = [AgentConstants.standpoint, target_idx]
+        critical_points_in_path = [AgentConstants.standpoint, target_idx.tolist()]
 
         line_idx = agentUtils.render_line_segments(critical_points_in_path)
 
@@ -69,10 +69,10 @@ class Chaser(object):
                     break
 
             if new_idx is not None:
-                for jj in np.arange(start=ii, end=len(line_idx)):
+                for jj in np.arange(start=ii, stop=len(line_idx)):
                     insert_idx = None
                     try:
-                        insert_idx = critical_points_in_path.index(line_idx[jj])
+                        insert_idx = critical_points_in_path.index(list(line_idx[jj]))
                     except ValueError:
                         pass
                     if insert_idx is not None:
@@ -82,6 +82,7 @@ class Chaser(object):
                             self.agent.currentAction = AgentConstants.taxi
                             self.agent.chase_failed = True
                             return
+                        line_is_inaccessible = self.agent.is_inaccessible[tuple(np.array(line_idx).transpose())]
 
             else:
                 warnings.warn(
@@ -96,7 +97,7 @@ class Chaser(object):
     def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
         return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
                and (not self.agent.is_inaccessible[idx0, idx1]) \
-               and (np.array(line_idx) == [idx0, idx1]).all(axis = 1).any()
+               and (not (np.array(line_idx) == [idx0, idx1]).all(axis = 1).any())
 
     def generate_action(self, critical_points, target_idx, target_size):
 
