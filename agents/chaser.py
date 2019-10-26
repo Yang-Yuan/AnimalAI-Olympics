@@ -5,8 +5,8 @@ import agentUtils
 from bresenham import bresenham
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
-# from pathfinding.finder.a_star import AStarFinder
-from pathfinding.finder.dijkstra import DijkstraFinder
+from pathfinding.finder.a_star import AStarFinder
+# from pathfinding.finder.dijkstra import DijkstraFinder
 
 
 # from pathfinding.finder.dijkstra import DijkstraFinder
@@ -18,9 +18,9 @@ class Chaser(object):
         self.agent = agent
         self.newest_target_idx = None
         self.newest_target_size = None
-        # self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
         self.newest_end_point = None
-        self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
 
