@@ -79,6 +79,7 @@ class Chaser(object):
                         critical_points_in_path.insert(insert_idx, new_idx)
                         line_idx = agentUtils.render_line_segments(critical_points_in_path)
                         if len(line_idx) != len(set(line_idx)):
+                            warnings.warn("Cannot find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                             self.agent.currentAction = AgentConstants.taxi
                             self.agent.chase_failed = True
                             return
