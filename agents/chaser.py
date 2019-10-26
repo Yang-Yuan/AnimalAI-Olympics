@@ -96,7 +96,7 @@ class Chaser(object):
     def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
         return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
                and (not self.agent.is_inaccessible[idx0, idx1]) \
-               and (line_idx == [idx0, idx1]).sum(axis=1).any()
+               and (np.array(line_idx) == [idx0, idx1]).all(axis = 1).any()
 
     def generate_action(self, critical_points, target_idx, target_size):
 
