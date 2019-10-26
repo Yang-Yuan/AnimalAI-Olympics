@@ -6,6 +6,8 @@ from bresenham import bresenham
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+
+
 # from pathfinding.finder.dijkstra import DijkstraFinder
 
 
@@ -33,9 +35,9 @@ class Chaser(object):
 
     def chase_internal(self, target_idx, target_size):
 
-        grid = Grid(matrix = np.logical_not(self.agent.is_inaccessible))
-        start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])
-        end = grid.node(target_idx[1], target_idx[0])
+        grid = Grid(matrix=np.logical_not(self.agent.is_inaccessible))
+        start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])  # it accept xy coords.
+        end = grid.node(target_idx[1], target_idx[0])  # it accept xy coords.
         path, _ = self.finder.find_path(start, end, grid)
 
         if path is None or 0 == len(path):
@@ -49,32 +51,32 @@ class Chaser(object):
     def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
         return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
                and (not self.agent.is_inaccessible[idx0, idx1]) \
-               and (not (np.array(line_idx) == [idx0, idx1]).all(axis = 1).any())
+               and (not (np.array(line_idx) == [idx0, idx1]).all(axis=1).any())
 
-    def generate_action(self, critical_points, target_idx, target_size):
+    def generate_action(self, path, target_idx, target_size):
 
-        start = critical_points[0]
+        start = path[0]
         end = None
-        for point in critical_points[1:]:
-            line_seg_idx = tuple(np.array(list(bresenham(start[0], start[1],
-                                                         point[0], point[1]))).transpose())
+        for point in path[1:]:
+            line_seg_idx = tuple(np.array(list(bresenham(start[1], start[0],
+                                                         point[1], point[0]))).transpose())
             line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
             if line_seg_is_inaccessible.any():
                 break
             else:
                 end = point
 
-        if (target_idx != end).any():
+        if (target_idx[::-1] != end).any():
             target_size = AgentConstants.size_limit
 
         direction_vec = np.array(end) - np.array(start)
 
-        if direction_vec[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+        if direction_vec[0] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
                 return AgentConstants.forward_left
             else:
                 return AgentConstants.left
-        elif direction_vec[1] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
+        elif direction_vec[0] > AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
                 return AgentConstants.forward_right
             else:
