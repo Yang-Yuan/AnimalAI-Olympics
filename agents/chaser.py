@@ -40,25 +40,30 @@ class Chaser(object):
             new_idx = None
             for ii in idx_idx:
 
-                red_pixel_idx = line_idx[ii]
+                inaccessible_pixel_idx = line_idx[ii]
                 delta = 1
-                while True:
-                    if (not self.agent.is_inaccessible[red_pixel_idx[0] + delta, red_pixel_idx[1]]) \
-                            and (line_idx == [red_pixel_idx[0] + delta, red_pixel_idx[1]]).sum(axis=1).any():
-                        new_idx = [red_pixel_idx[0] + delta, red_pixel_idx[1]]
+                while delta < AgentConstants.resolution:
+                    idx0 = inaccessible_pixel_idx[0] + delta
+                    idx1 = inaccessible_pixel_idx[1]
+                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
+                        new_idx = [idx0, idx1]
                         break
-                    if (not self.agent.is_inaccessible[red_pixel_idx[0] - delta, red_pixel_idx[1]]) \
-                            and (line_idx == [red_pixel_idx[0] - delta, red_pixel_idx[1]]).sum(axis=1).any():
-                        new_idx = [red_pixel_idx[0] - delta, red_pixel_idx[1]]
+                    idx0 = inaccessible_pixel_idx[0] - delta
+                    idx1 = inaccessible_pixel_idx[1]
+                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
+                        new_idx = [idx0, idx1]
                         break
-                    if (not self.agent.is_inaccessible[red_pixel_idx[0], red_pixel_idx[1] + delta]) \
-                            and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] + delta]).sum(axis=1).any():
-                        new_idx = [red_pixel_idx[0], red_pixel_idx[1] + delta]
+                    idx0 = inaccessible_pixel_idx[0]
+                    idx1 = inaccessible_pixel_idx[1] + delta
+                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
+                        new_idx = [idx0, idx1]
                         break
-                    if (not self.agent.is_inaccessible[red_pixel_idx[0], red_pixel_idx[1] - delta]) \
-                            and (line_idx == [red_pixel_idx[0], red_pixel_idx[1] - delta]).sum(axis=1).any():
-                        new_idx = [red_pixel_idx[0], red_pixel_idx[1] - delta]
+                    idx0 = inaccessible_pixel_idx[0]
+                    idx1 = inaccessible_pixel_idx[1] - delta
+                    if self.is_new_critical_point_in_path(line_idx, idx0, idx1):
+                        new_idx = [idx0, idx1]
                         break
+                    delta += 1
 
                 if new_idx is not None:
                     break
@@ -73,12 +78,25 @@ class Chaser(object):
                     if insert_idx is not None:
                         critical_points_in_path.insert(insert_idx, new_idx)
                         line_idx = agentUtils.render_line_segments(critical_points_in_path)
+                        if len(line_idx) != len(set(line_idx)):
+                            self.agent.currentAction = AgentConstants.taxi
+                            self.agent.chase_failed = True
+                            return
+
             else:
-                warnings.warn("Chase Failed!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                warnings.warn(
+                    "This branch wasn't supposed to be reached because of the trick of frame. Something must be "
+                    "wrong!!!!!!!!!!!!!!!!")
                 self.agent.currentAction = AgentConstants.taxi
                 self.agent.chase_failed = True
+                return
 
         self.agent.currentAction = self.generate_action(critical_points_in_path, target_idx, target_size)
+
+    def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
+        return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
+               and (not self.agent.is_inaccessible[idx0, idx1]) \
+               and (line_idx == [idx0, idx1]).sum(axis=1).any()
 
     def generate_action(self, critical_points, target_idx, target_size):
 
