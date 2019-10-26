@@ -83,6 +83,7 @@ class Chaser(object):
                             self.agent.chase_failed = True
                             return
                         line_is_inaccessible = self.agent.is_inaccessible[tuple(np.array(line_idx).transpose())]
+                        break
 
             else:
                 warnings.warn(
@@ -115,7 +116,7 @@ class Chaser(object):
         if (target_idx != end).any():
             target_size = AgentConstants.size_limit
 
-        direction_vec = end - start
+        direction_vec = np.array(end) - np.array(start)
 
         if direction_vec[1] < -AgentConstants.aim_error_limit * (1 + np.exp(-target_size / AgentConstants.hl)):
             if target_size < AgentConstants.size_limit:
