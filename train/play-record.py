@@ -18,7 +18,7 @@ logger = logging.getLogger("play-record-logger")
 ##################################################
 # Specify the arena config here
 ##################################################
-arenaConfig = '../examples/configs/2-Preferences.yaml'
+arenaConfig = '../examples/configs/3-Obstacles.yaml'
 
 ##################################################
 # Create a folder to store data of this task
@@ -41,7 +41,7 @@ INCREMENT_MEMORY_SIZE = 250
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
 
-seed = 10
+seed = 333
 base_port = 5005
 sub_id = 1
 run_id = 'train_example'

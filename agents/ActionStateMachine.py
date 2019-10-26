@@ -43,7 +43,8 @@ class ActionStateMachine(StateMachine):
     search = pirouetting.to(searching) | \
              chasing.to(searching)
 
-    chase = searching.to(chasing) | pirouetting.to(chasing) | rotating_to_direction.to(chasing) | roaming.to(chasing)
+    chase = searching.to(chasing) | pirouetting.to(chasing) | rotating_to_direction.to(chasing) | roaming.to(chasing) \
+            | chasing.to(chasing)
 
     decelerate = chasing.to(decelerating) | \
                  roaming.to(decelerating)
@@ -129,6 +130,7 @@ class ActionStateMachine(StateMachine):
         print("on_chase~~~~~~~~~~~~~~~~~")
         self.agent.not_seeing_target_step_n = 0
         self.agent.chase_failed = False
+        self.agent.chaser.newest_end_point = None
 
     def on_enter_chasing(self):
         print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")

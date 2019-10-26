@@ -138,9 +138,11 @@ class Perception(object):
                 idx = np.argwhere(labels == label)
                 idx_idx = idx.argmax(axis=0)[0]
                 lowest_idx = idx[idx_idx]
-
-                if not self.agent.is_inaccessible[lowest_idx[0]: lowest_idx[0] + 6, lowest_idx[1]].any():
-                    return lowest_idx, sizes[ii]
+                return lowest_idx, sizes[ii]
+            #     if not self.agent.is_inaccessible[lowest_idx[0]: lowest_idx[0] + 3, lowest_idx[1]].any():
+            #         return lowest_idx, sizes[ii]
+            #
+            # return None, None
         else:
             return None, None
 

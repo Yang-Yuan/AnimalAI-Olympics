@@ -5,7 +5,8 @@ import agentUtils
 from bresenham import bresenham
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
-from pathfinding.finder.a_star import AStarFinder
+# from pathfinding.finder.a_star import AStarFinder
+from pathfinding.finder.dijkstra import DijkstraFinder
 
 
 # from pathfinding.finder.dijkstra import DijkstraFinder
@@ -17,8 +18,9 @@ class Chaser(object):
         self.agent = agent
         self.newest_target_idx = None
         self.newest_target_size = None
-        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
-        # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        # self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        self.newest_end_point = None
+        self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
 
@@ -34,8 +36,11 @@ class Chaser(object):
         self.chase_internal(imaginary_target_idx, imaginary_target_size)
 
     def chase_internal(self, target_idx, target_size):
+        matrix = np.logical_not(self.agent.is_inaccessible).astype(np.float)
+        if self.newest_end_point is not None:
+            matrix *= self.calculate_path_consistent_gain_ratio()
 
-        grid = Grid(matrix=np.logical_not(self.agent.is_inaccessible))
+        grid = Grid(matrix=matrix)
         start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])  # it accept xy coords.
         end = grid.node(target_idx[1], target_idx[0])  # it accept xy coords.
         path, _ = self.finder.find_path(start, end, grid)
@@ -66,6 +71,9 @@ class Chaser(object):
             else:
                 end = point
 
+        self.newest_end_point = end
+        print(end)
+
         if (target_idx[::-1] != end).any():
             target_size = AgentConstants.size_limit
 
@@ -91,6 +99,14 @@ class Chaser(object):
         target_size = 1
 
         return target_idx, target_size
+
+    def calculate_path_consistent_gain_ratio(self):
+        end_idx0 = np.full((AgentConstants.resolution, AgentConstants.resolution), self.newest_end_point[1])
+        end_idx1 = np.full((AgentConstants.resolution, AgentConstants.resolution), self.newest_end_point[0])
+        idx0, idx1 = np.meshgrid(np.arange(AgentConstants.resolution), np.arange(AgentConstants.resolution),
+                                 indexing="ij")
+        ratio = np.exp2(abs(idx0 - end_idx0) + abs(idx1 - end_idx1))
+        return ratio
 
     def reset(self):
         self.newest_target_idx = None

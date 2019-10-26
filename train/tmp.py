@@ -59,18 +59,18 @@ from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 import numpy as np
 
-# matrix = [
-#   [1, 1, 1],
-#   [1, 0, 1],
-#   [1, 1, 1]
-# ]
-matrix = np.full((3, 4), True)
-matrix[1, 1:4] = False
+matrix = [
+  [2, 2, 2],
+  [2, 0, 1],
+  [2, 2, 2]
+]
+# matrix = np.full((3, 4), True)
+# matrix[1, 1:4] = False
 grid = Grid(matrix=matrix)
 
 
 start = grid.node(0, 0)
-end = grid.node(3, 2)
+end = grid.node(2, 2)
 
 finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 path, runs = finder.find_path(start, end, grid)
