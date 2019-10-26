@@ -3,6 +3,7 @@ from ActionStateMachine import ActionStateMachine
 from strategy import Strategy
 from perception import Perception
 from chaser import Chaser
+from instinct import Instinct
 import AgentConstants
 import queue
 
@@ -23,6 +24,7 @@ class Agent(object):
         self.strategy = Strategy(self)
         self.perception = Perception(self)
         self.chaser = Chaser(self)
+        self.instinct = Instinct(self)
 
         # primitive perception
         self.obs_visual = None
@@ -145,6 +147,9 @@ class Agent(object):
 
         # set action by running strategy
         self.strategy.run_strategy()
+
+        # revise action by instinct
+        self.instinct.revise()
 
         return self.currentAction
 

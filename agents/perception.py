@@ -38,6 +38,8 @@ class Perception(object):
             self.agent.is_brown, AgentConstants.size_limit) else AgentConstants.all_false
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "red")) < AgentConstants.red_tolerance
+        self.agent.is_gray = self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1] \
+                             == self.agent.obs_visual[:, :, 2]
         # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
         #     "orange")) < AgentConstants.orange_tolerance
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
@@ -123,7 +125,8 @@ class Perception(object):
 
     def synthesize_is_inaccessible(self):
         # TODO maybe add the walls here, but...
-        is_inaccessible = np.logical_and(self.agent.is_red, np.logical_not(AgentConstants.frame_mask))
+        is_inaccessible = np.logical_or(self.agent.is_gray, self.agent.is_red)
+        is_inaccessible = np.logical_and(is_inaccessible, np.logical_not(AgentConstants.frame_mask))
         return is_inaccessible
 
     def find_reachable_target(self, is_color):
