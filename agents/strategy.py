@@ -1,6 +1,5 @@
 import AgentConstants
 import warnings
-import sys
 
 
 class Strategy(object):
@@ -24,7 +23,8 @@ class Strategy(object):
                     break
                 else:
                     warnings.warn("undefined branch!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    sys.exit(1)
+                    self.agent.actionStateMachine.reset()
+                    break
 
             # if the agent is pirouetting
             elif self.agent.actionStateMachine.is_pirouetting:
@@ -140,7 +140,8 @@ class Strategy(object):
             # if the agent is in an unknown state
             else:
                 warnings.warn("An unknown state: {}".format(self.agent.actionStateMachine.current_state))
-                sys.exit(1)
+                self.agent.actionStateMachine.reset()
+                break
 
     def reset(self):
         pass

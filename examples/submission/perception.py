@@ -77,8 +77,8 @@ class Perception(object):
                 else:
                     warnings.warn("Nowhere to go, just move forward")
                     self.agent.safest_direction = 0
-            print("target_color renewed: {} and safest_direction renewed: {}".format(self.agent.target_color,
-                                                                                     self.agent.safest_direction))
+            # print("target_color renewed: {} and safest_direction renewed: {}".format(self.agent.target_color,
+            #                                                                          self.agent.safest_direction))
 
     def renew_target(self):
 
@@ -170,7 +170,8 @@ class Perception(object):
                 return
             else:
                 warnings.warn("unkown corlor!!!!!!!!!!!!!!!!!!")
-                sys.exit(1)
+                # sys.exit(1)
+                return
 
     def update_nearest_inaccessible_idx(self):
         idx = np.argwhere(AgentConstants.road_mask & self.agent.is_inaccessible)

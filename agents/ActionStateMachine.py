@@ -64,11 +64,11 @@ class ActionStateMachine(StateMachine):
     # ************************** callbacks for pirouette ***************************
 
     def on_pirouette(self):
-        print("on_pirouette~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_pirouette~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.pirouette_step_n = 0
 
     def on_enter_pirouetting(self):
-        print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
+        # print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
         self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
         self.agent.perception.renew_target_from_panorama()
@@ -77,21 +77,22 @@ class ActionStateMachine(StateMachine):
 
     # ************************** callbacks for roam ***************************
     def on_roam(self):
-        print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_roam~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        pass
 
     def on_enter_roaming(self):
-        print("on_roaming~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_roaming~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.forward
 
     # ************************** callbacks for roam end***************************
 
     # ************************** callbacks for search ***************************
     def on_search(self):
-        print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_target~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
         self.agent.pirouette_step_n = 0
 
     def on_enter_searching(self):
-        print("on_enter_searching: {}".format(self.agent.pirouette_step_n))
+        # print("on_enter_searching: {}".format(self.agent.pirouette_step_n))
         self.agent.currentAction = AgentConstants.left
         self.agent.pirouette_step_n += 1
         self.agent.perception.renew_target_from_panorama()
@@ -100,13 +101,13 @@ class ActionStateMachine(StateMachine):
 
     # ************************** callbacks for rotate_to_direction ***************************
     def on_rotate_to_direction(self):
-        print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
         if AgentConstants.pirouette_step_limit / 2 <= self.agent.safest_direction \
                 < AgentConstants.pirouette_step_limit:
             self.agent.safest_direction -= 60
 
     def on_enter_rotating_to_direction(self):
-        print("on_enter_rotating_to_direction~~~~~~~~~~~~~~~~~")
+        # print("on_enter_rotating_to_direction~~~~~~~~~~~~~~~~~")
         if self.agent.safest_direction > 0:
             self.agent.currentAction = AgentConstants.left
             self.agent.safest_direction -= 1
@@ -118,21 +119,21 @@ class ActionStateMachine(StateMachine):
 
     # ************************** callbacks for decelerate ***************************
     def on_enter_decelerating(self):
-        print("on_enter_decelerating~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_enter_decelerating~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.taxi
 
     # ************************** callbacks for decelerate end***************************
 
     # ************************** callbacks for chase ***************************
     def on_chase(self):
-        print("on_chase~~~~~~~~~~~~~~~~~")
+        # print("on_chase~~~~~~~~~~~~~~~~~")
         self.agent.not_seeing_target_step_n = 0
         self.agent.chase_failed = False
         self.agent.chaser.newest_path = None
         self.agent.chaser.newest_end = None
 
     def on_enter_chasing(self):
-        print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")
+        # print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")
         if self.agent.reachable_target_idx is None:
             self.agent.not_seeing_target_step_n += 1
             self.agent.chaser.chase_in_dark()
