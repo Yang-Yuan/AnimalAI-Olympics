@@ -130,7 +130,7 @@ class ActionStateMachine(StateMachine):
         print("on_chase~~~~~~~~~~~~~~~~~")
         self.agent.not_seeing_target_step_n = 0
         self.agent.chase_failed = False
-        self.agent.chaser.newest_end_point = None
+        self.agent.chaser.newest_path = None
 
     def on_enter_chasing(self):
         print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")

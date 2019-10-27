@@ -21,7 +21,7 @@ class Chaser(object):
         self.newest_target_idx = None
         self.newest_target_size = None
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
-        self.newest_end_point = None
+        self.newest_path = None
         # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
@@ -39,7 +39,7 @@ class Chaser(object):
 
     def chase_internal(self, target_idx, target_size):
         matrix = np.logical_not(self.agent.is_inaccessible).astype(np.float)
-        if self.newest_end_point is not None:
+        if self.newest_path is not None:
             matrix *= self.calculate_path_consistent_gain_ratio()
 
         grid = Grid(matrix=matrix)
@@ -53,6 +53,7 @@ class Chaser(object):
             self.agent.chase_failed = True
             return
 
+        self.newest_path = path
         self.agent.currentAction = self.generate_action(path, target_idx, target_size)
 
     def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
@@ -78,9 +79,6 @@ class Chaser(object):
                 end = point
             else:
                 break
-
-        self.newest_end_point = end
-        print(end)
 
         if (target_idx[::-1] != end).any():
             target_size = AgentConstants.size_limit
@@ -109,11 +107,13 @@ class Chaser(object):
         return target_idx, target_size
 
     def calculate_path_consistent_gain_ratio(self):
-        end_idx0 = np.full((AgentConstants.resolution, AgentConstants.resolution), self.newest_end_point[1])
-        end_idx1 = np.full((AgentConstants.resolution, AgentConstants.resolution), self.newest_end_point[0])
-        idx0, idx1 = np.meshgrid(np.arange(AgentConstants.resolution), np.arange(AgentConstants.resolution),
-                                 indexing="ij")
-        ratio = np.exp2(abs(idx0 - end_idx0) + abs(idx1 - end_idx1))
+
+        path_idx = np.array(self.newest_path)[:, ::-1]
+        ratio = np.zeros((AgentConstants.resolution, AgentConstants.resolution), dtype = float)
+        for ii in np.arange(AgentConstants.resolution):
+            for jj in np.arange(AgentConstants.resolution):
+                ratio[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis = 1).min()
+
         return ratio
 
     def reset(self):
