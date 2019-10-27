@@ -28,7 +28,7 @@ red_tolerance = 0.001
 # box_dark_tolerance = 0.002362055933484493
 # box_light_tolerance = 0.002362055933484493
 # UL_tolerance = 0.002229215708910319
-yellow_tolerance = 0.0037600991284689814
+yellow_tolerance = 0.01
 
 # road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 # for delta, ii in zip(np.repeat(np.arange(resolution / 4), 2),
