@@ -18,7 +18,7 @@ logger = logging.getLogger("play-record-logger")
 ##################################################
 # Specify the arena config here
 ##################################################
-arenaConfig = '../examples/configs/3-Obstacles.yaml'
+arenaConfig = '../configs/234-POA/poa-3.yaml'
 
 ##################################################
 # Create a folder to store data of this task

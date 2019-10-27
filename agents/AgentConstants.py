@@ -29,11 +29,18 @@ red_tolerance = 0.03996598639455783
 # UL_tolerance = 0.002229215708910319
 yellow_tolerance = 0.0037600991284689814
 
+# road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
+# for delta, ii in zip(np.repeat(np.arange(resolution / 4), 2),
+#                      np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
+#     for jj in np.arange(start = 0 + delta, stop = resolution - delta, dtype = int):
+#         road_mask[ii, jj] = True
+
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
-for delta, ii in zip(np.repeat(np.arange(resolution / 4), 2),
-                     np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
+for delta, ii in zip(np.repeat(np.arange(resolution / 2, dtype = int)[::-1], 2),
+                     np.arange(start = 0, stop = resolution, step = 1, dtype = int)):
     for jj in np.arange(start = 0 + delta, stop = resolution - delta, dtype = int):
         road_mask[ii, jj] = True
+
 frame_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 frame_mask[0, :] = True
 frame_mask[resolution - 1, :] = True
@@ -49,7 +56,7 @@ hl = 2
 pirouette_step_limit = 60
 not_seeing_target_step_limit = 60
 roam_step_limit = 10
-red_pixel_on_road_limit = 882
+minimal_dist_to_in_accessible = resolution / 4
 standpoint = [83, 41]
 path_consistent_ratio = 0.5
 

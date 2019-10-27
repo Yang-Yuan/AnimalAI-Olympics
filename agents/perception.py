@@ -46,6 +46,9 @@ class Perception(object):
             "yellow")) < AgentConstants.yellow_tolerance
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
         self.update_target()
+        self.agent.dist_to_nearest_inaccessible = AgentConstants.resolution - \
+                                                   np.argwhere(AgentConstants.road_mask & self.agent.is_inaccessible) \
+                                                   [:, 1].argmax()
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
@@ -109,7 +112,7 @@ class Perception(object):
         return False
 
     def is_front_safe(self):
-        return (self.agent.is_red & AgentConstants.road_mask).sum() < AgentConstants.red_pixel_on_road_limit
+        return self.agent.dist_to_nearest_inaccessible > AgentConstants.minimal_dist_to_in_accessible
 
     def is_static(self):
         return (self.agent.obs_vector == 0).all()

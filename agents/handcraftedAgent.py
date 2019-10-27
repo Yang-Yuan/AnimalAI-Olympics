@@ -3,7 +3,6 @@ from ActionStateMachine import ActionStateMachine
 from strategy import Strategy
 from perception import Perception
 from chaser import Chaser
-from instinct import Instinct
 import AgentConstants
 import queue
 
@@ -24,7 +23,6 @@ class Agent(object):
         self.strategy = Strategy(self)
         self.perception = Perception(self)
         self.chaser = Chaser(self)
-        self.instinct = Instinct(self)
 
         # primitive perception
         self.obs_visual = None
@@ -44,6 +42,7 @@ class Agent(object):
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
+        self.dist_to_nearest_inaccessible = None
 
         # memory
         self.visual_h_memory = queue.Queue(maxsize = AgentConstants.memory_size)
@@ -99,6 +98,7 @@ class Agent(object):
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
+        self.dist_to_nearest_inaccessible = None
 
         # memory
         self.visual_h_memory.queue.clear()
