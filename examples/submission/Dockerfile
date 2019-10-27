@@ -24,7 +24,13 @@ ENV PATH /opt/conda/envs/python36/bin:/opt/conda/envs/bin:$PATH
 
 RUN pip install animalai
 
-COPY agent.py /aaio/agent.py
+COPY handcraftedAgent.py /aaio/agent.py
+COPY perception.py /aaio/perception.py
+COPY strategy.py /aaio/strategy.py
+COPY ActionStateMachine.py /aaio/ActionStateMachine.py
+COPY chaser.py /aaio/chaser.py
+COPY AgentConstants.py /aaio/AgentConstants.py
+COPY agentUtils.py /aaio/agentUtils.py
 COPY data /aaio/data
 
 ENV HTTP_PROXY ""
