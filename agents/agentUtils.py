@@ -1,7 +1,7 @@
 import numpy as np
 from bresenham import bresenham
 from skimage import measure
-from scipy.ndimage.interpolation import shift
+
 
 
 def toHue(rgb):
@@ -59,12 +59,3 @@ def is_color_significant(is_color, significant_size):
     else:
         return False
 
-
-def puff(is_color, delta):
-    new_is_color = is_color.copy()
-    for delt in np.arange(1, delta + 1):
-        new_is_color = np.logical_or(new_is_color, shift(is_color, (-delt, 0), cval=False))
-        new_is_color = np.logical_or(new_is_color, shift(is_color, (delt, 0), cval=False))
-        new_is_color = np.logical_or(new_is_color, shift(is_color, (0, -delt), cval=False))
-        new_is_color = np.logical_or(new_is_color, shift(is_color, (0, delt), cval=False))
-    return new_is_color

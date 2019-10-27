@@ -4,6 +4,7 @@ import warnings
 import sys
 from skimage import measure
 import agentUtils
+from scipy.ndimage.interpolation import shift
 
 
 class Perception(object):
@@ -38,17 +39,16 @@ class Perception(object):
             self.agent.is_brown, AgentConstants.size_limit) else AgentConstants.all_false
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "red")) < AgentConstants.red_tolerance
-        self.agent.is_gray = self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1] \
-                             == self.agent.obs_visual[:, :, 2]
+        self.agent.is_red = self.puff_red(delta = 2)
+        self.agent.is_gray = (self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1]) & \
+                             (self.agent.obs_visual[:, :, 1] == self.agent.obs_visual[:, :, 2])
         # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
         #     "orange")) < AgentConstants.orange_tolerance
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "yellow")) < AgentConstants.yellow_tolerance
         self.agent.is_inaccessible = self.synthesize_is_inaccessible()
         self.update_target()
-        self.agent.dist_to_nearest_inaccessible = AgentConstants.resolution - \
-                                                   np.argwhere(AgentConstants.road_mask & self.agent.is_inaccessible) \
-                                                   [:, 1].argmax()
+        self.update_nearest_inaccessible_idx()
 
         self.agent.visual_h_memory.put(self.agent.obs_visual_h)
         self.agent.is_green_memory.put(self.agent.is_green)
@@ -112,7 +112,11 @@ class Perception(object):
         return False
 
     def is_front_safe(self):
-        return self.agent.dist_to_nearest_inaccessible > AgentConstants.minimal_dist_to_in_accessible
+        if self.agent.nearest_inaccessible_idx is None:
+            return True
+        else:
+            return (AgentConstants.resolution - self.agent.nearest_inaccessible_idx[0]) > \
+                   AgentConstants.minimal_dist_to_in_accessible
 
     def is_static(self):
         return (self.agent.obs_vector == 0).all()
@@ -167,6 +171,23 @@ class Perception(object):
             else:
                 warnings.warn("unkown corlor!!!!!!!!!!!!!!!!!!")
                 sys.exit(1)
+
+    def update_nearest_inaccessible_idx(self):
+        idx = np.argwhere(AgentConstants.road_mask & self.agent.is_inaccessible)
+        if 0 == len(idx):
+            self.agent.nearest_inaccessible_idx = None
+        else:
+            self.agent.nearest_inaccessible_idx = idx[idx[:, 0].argmax()]
+
+    def puff_red(self, delta):
+        new_is_red = self.agent.is_red.copy()
+        for delt in np.arange(1, delta + 1):
+            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (-delt, 0), cval=False))
+            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (delt, 0), cval=False))
+            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, -delt), cval=False))
+            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, delt), cval=False))
+        new_is_red = new_is_red & np.logical_not(self.agent.is_green) & np.logical_not(self.agent.is_brown)
+        return new_is_red
 
     def reset(self):
         pass

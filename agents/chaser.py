@@ -6,6 +6,8 @@ from bresenham import bresenham
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+
+
 # from pathfinding.finder.dijkstra import DijkstraFinder
 
 
@@ -61,15 +63,21 @@ class Chaser(object):
     def generate_action(self, path, target_idx, target_size):
 
         start = path[0]
-        end = None
+        end = path[1]
         for point in path[1:]:
-            line_seg_idx = tuple(np.array(list(bresenham(start[1], start[0],
-                                                         point[1], point[0]))).transpose())
-            line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
-            if line_seg_is_inaccessible.any():
-                break
-            else:
+            clear = True
+            for jj in np.arange(AgentConstants.resolution):
+                line_seg_idx = tuple(np.array(list(bresenham(83, jj,
+                                                             point[1], point[0]))).transpose())
+                line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
+                if line_seg_is_inaccessible.any():
+                    clear = False
+                    break
+
+            if clear:
                 end = point
+            else:
+                break
 
         self.newest_end_point = end
         print(end)

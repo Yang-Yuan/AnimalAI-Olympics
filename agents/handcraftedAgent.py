@@ -42,7 +42,7 @@ class Agent(object):
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
-        self.dist_to_nearest_inaccessible = None
+        self.nearest_inaccessible_idx = None
 
         # memory
         self.visual_h_memory = queue.Queue(maxsize = AgentConstants.memory_size)
@@ -98,7 +98,7 @@ class Agent(object):
         self.is_inaccessible = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
-        self.dist_to_nearest_inaccessible = None
+        self.nearest_inaccessible_idx = None
 
         # memory
         self.visual_h_memory.queue.clear()
@@ -147,9 +147,6 @@ class Agent(object):
 
         # set action by running strategy
         self.strategy.run_strategy()
-
-        # revise action by instinct
-        self.instinct.revise()
 
         return self.currentAction
 
