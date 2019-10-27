@@ -40,7 +40,7 @@ class Chaser(object):
     def chase_internal(self, target_idx, target_size):
         matrix = np.logical_not(self.agent.is_inaccessible).astype(np.float)
         if self.newest_path is not None:
-            matrix *= self.calculate_path_consistent_gain_ratio()
+            matrix = self.calculate_path_consistent_matrix(matrix)
 
         grid = Grid(matrix=matrix)
         start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])  # it accept xy coords.
@@ -106,15 +106,15 @@ class Chaser(object):
 
         return target_idx, target_size
 
-    def calculate_path_consistent_gain_ratio(self):
+    def calculate_path_consistent_matrix(self, matrix):
 
         path_idx = np.array(self.newest_path)[:, ::-1]
-        ratio = np.zeros((AgentConstants.resolution, AgentConstants.resolution), dtype = float)
         for ii in np.arange(AgentConstants.resolution):
             for jj in np.arange(AgentConstants.resolution):
-                ratio[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis = 1).min()
+                if matrix[ii, jj] == 1:
+                    matrix[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis = 1).min()
 
-        return ratio
+        return matrix
 
     def reset(self):
         self.newest_target_idx = None
