@@ -57,7 +57,7 @@ hl = 2
 pirouette_step_limit = 60
 not_seeing_target_step_limit = 60
 roam_step_limit = 10
-minimal_dist_to_in_accessible = resolution / 2
+minimal_dist_to_in_accessible = resolution / 4
 standpoint = [83, 41]
 path_consistent_ratio = 0.5
 

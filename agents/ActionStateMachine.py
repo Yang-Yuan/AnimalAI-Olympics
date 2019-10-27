@@ -33,7 +33,8 @@ class ActionStateMachine(StateMachine):
            decelerating.to.itself()
 
     pirouette = static.to(pirouetting) | \
-                decelerating.to(pirouetting)
+                decelerating.to(pirouetting) | \
+                rotating_to_direction.to(pirouetting)
 
     rotate_to_direction = pirouetting.to(rotating_to_direction)
 
