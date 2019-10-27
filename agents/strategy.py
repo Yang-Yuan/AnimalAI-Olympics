@@ -2,6 +2,7 @@ import AgentConstants
 import warnings
 import sys
 
+
 class Strategy(object):
 
     def __init__(self, agent):

@@ -1,8 +1,5 @@
 from statemachine import StateMachine, State
 import AgentConstants
-import numpy as np
-import warnings
-import sys
 
 
 class ActionStateMachine(StateMachine):
@@ -132,6 +129,7 @@ class ActionStateMachine(StateMachine):
         self.agent.not_seeing_target_step_n = 0
         self.agent.chase_failed = False
         self.agent.chaser.newest_path = None
+        self.agent.chaser.newest_end = None
 
     def on_enter_chasing(self):
         print("on_enter_chasing~~~~~~~~~~~~~~~~~~~~~~~~")

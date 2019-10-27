@@ -3,7 +3,6 @@ from bresenham import bresenham
 from skimage import measure
 
 
-
 def toHue(rgb):
     out_h = np.zeros(rgb.shape[:-1])
 

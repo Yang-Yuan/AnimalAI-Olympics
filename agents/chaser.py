@@ -1,17 +1,10 @@
 import numpy as np
 import AgentConstants
 import warnings
-import agentUtils
 from bresenham import bresenham
 from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
-
-
-# from pathfinding.finder.dijkstra import DijkstraFinder
-
-
-# from pathfinding.finder.dijkstra import DijkstraFinder
 
 
 class Chaser(object):
@@ -22,6 +15,7 @@ class Chaser(object):
         self.newest_target_size = None
         self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
         self.newest_path = None
+        self.newest_end = None
         # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
@@ -80,8 +74,13 @@ class Chaser(object):
             else:
                 break
 
+        self.newest_end = end
+
         if (target_idx[::-1] != end).any():
             target_size = AgentConstants.size_limit
+
+        # self.newest_path = list(bresenham(AgentConstants.standpoint[1], AgentConstants.standpoint[0], end[0], end[1])) \
+        #                    + path[path.index(end) + 1:]
 
         direction_vec = np.array(end) - np.array(start)
 

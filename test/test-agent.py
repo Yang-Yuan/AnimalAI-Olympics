@@ -14,6 +14,7 @@ import constants
 import time
 from skimage import segmentation, color
 from scipy.stats import binned_statistic
+import AgentConstants
 
 from handcraftedAgent import Agent
 
@@ -80,6 +81,9 @@ agent = Agent()
 plt.ion()
 fig, ax = plt.subplots(ncols=1, nrows=1)
 image = ax.imshow(np.zeros((resolution, resolution, 3)))
+line, = ax.plot([], [])
+sca = ax.scatter([], [], s = 5, c="yellow")
+
 
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
@@ -96,12 +100,22 @@ for arenaConfig in arenaConfigs:
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
+            action = agent.step(obs, reward, done, info)
+
             # Visualization
             image.set_data(obs[0])
+            if agent.chaser.newest_path is not None:
+                sca.set_offsets(np.array(agent.chaser.newest_path))
+            else:
+                sca.set_offsets(AgentConstants.standpoint[::-1])
+            if agent.chaser.newest_end is not None:
+                line.set_xdata([AgentConstants.standpoint[1], agent.chaser.newest_end[0]])
+                line.set_ydata([AgentConstants.standpoint[0], agent.chaser.newest_end[1]])
+            else:
+                line.set_xdata([])
+                line.set_ydata([])
             fig.canvas.draw()
             fig.canvas.flush_events()
-
-            action = agent.step(obs, reward, done, info)
 
             if all(brainInfo['Learner'].local_done):
                 break
