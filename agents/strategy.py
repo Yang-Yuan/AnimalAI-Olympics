@@ -143,5 +143,10 @@ class Strategy(object):
                 self.agent.actionStateMachine.reset()
                 break
 
+        self.deadlock_breaker()
+
+    def deadlock_breaker(self):
+        pass
+
     def reset(self):
         pass

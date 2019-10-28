@@ -38,8 +38,10 @@ class Agent(object):
         self.is_red = None
         # self.is_orange = None
         self.is_yellow = None
+        self.is_blue = None
         self.target_color = None
         self.is_inaccessible = None
+        self.is_inaccessible_masked = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
         self.nearest_inaccessible_idx = None
@@ -64,7 +66,7 @@ class Agent(object):
         self.chase_failed = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
-    def reset(self, t):
+    def reset(self, t=250):
         """
         Reset is called before each episode begins
         Leave blank if nothing needs to happen there
@@ -94,8 +96,10 @@ class Agent(object):
         self.is_red = None
         # self.is_orange = None
         self.is_yellow = None
+        self.is_blue = None
         self.target_color = None
         self.is_inaccessible = None
+        self.is_inaccessible_masked = None
         self.reachable_target_idx = None
         self.reachable_target_size = None
         self.nearest_inaccessible_idx = None

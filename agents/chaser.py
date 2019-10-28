@@ -29,10 +29,16 @@ class Chaser(object):
 
         imaginary_target_idx, imaginary_target_size = self.imagine_target()
 
+        if imaginary_target_idx is None:
+            warnings.warn("Can't imagine a target to chase!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
+
         self.chase_internal(imaginary_target_idx, imaginary_target_size)
 
     def chase_internal(self, target_idx, target_size):
-        matrix = np.logical_not(self.agent.is_inaccessible).astype(np.float)
+        matrix = np.logical_not(self.agent.is_inaccessible_masked).astype(np.float)
         if self.newest_path is not None:
             matrix = self.calculate_path_consistent_matrix(matrix)
 
@@ -41,7 +47,7 @@ class Chaser(object):
         end = grid.node(target_idx[1], target_idx[0])  # it accept xy coords.
         path, _ = self.finder.find_path(start, end, grid)
 
-        if path is None or 0 == len(path):
+        if path is None or len(path) <= 1:
             warnings.warn("Can't find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             self.agent.currentAction = AgentConstants.taxi
             self.agent.chase_failed = True
@@ -50,22 +56,44 @@ class Chaser(object):
         self.newest_path = path
         self.agent.currentAction = self.generate_action(path, target_idx, target_size)
 
-    def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
-        return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
-               and (not self.agent.is_inaccessible[idx0, idx1]) \
-               and (not (np.array(line_idx) == [idx0, idx1]).all(axis=1).any())
+    # def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
+    #     return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
+    #            and (not self.agent.is_inaccessible[idx0, idx1]) \
+    #            and (not (np.array(line_idx) == [idx0, idx1]).all(axis=1).any())
 
     def generate_action(self, path, target_idx, target_size):
+
+        min_col = None
+        for jj in np.arange(AgentConstants.resolution):
+            if not self.agent.is_inaccessible[83, jj]:
+                min_col = jj
+                break
+        if min_col is None:
+            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
+
+        max_col = None
+        for jj in np.arange(AgentConstants.resolution)[::-1]:
+            if not self.agent.is_inaccessible[83, jj]:
+                max_col = jj
+                break
+        if max_col is None:
+            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
 
         start = path[0]
         end = path[1]
         for point in path[1:]:
             clear = True
-            line_seg_idx = tuple(np.array(list(bresenham(83, 0, point[1], point[0]))).transpose())
+            line_seg_idx = tuple(np.array(list(bresenham(83, min_col, point[1], point[0]))).transpose())
             line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
             if line_seg_is_inaccessible.any():
                 clear = False
-            line_seg_idx = tuple(np.array(list(bresenham(83, 83, point[1], point[0]))).transpose())
+            line_seg_idx = tuple(np.array(list(bresenham(83, max_col, point[1], point[0]))).transpose())
             line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
             if line_seg_is_inaccessible.any():
                 clear = False
@@ -100,8 +128,20 @@ class Chaser(object):
 
     def imagine_target(self):
 
-        target_idx = AgentConstants.frame_idx[
-            np.argmin(abs(AgentConstants.frame_idx - self.newest_target_idx).sum(axis=1))]
+        # target_idx = AgentConstants.frame_idx[
+        #     np.argmin(abs(AgentConstants.frame_idx - self.newest_target_idx).sum(axis=1))]
+
+        distance = abs(AgentConstants.idx0_grid - np.full((AgentConstants.resolution, AgentConstants.resolution),
+                                                          self.newest_target_idx[0])) + \
+                   abs(AgentConstants.idx1_grid - np.full((AgentConstants.resolution, AgentConstants.resolution),
+                                                          self.newest_target_idx[1]))
+        ascending_distance_idx = np.unravel_index(distance.flatten().argsort(),
+                                                  shape=(AgentConstants.resolution, AgentConstants.resolution))
+        target_idx = None
+        for ii, jj in zip(*ascending_distance_idx):
+            if not self.agent.is_inaccessible[ii, jj]:
+                target_idx = np.array([ii, jj])
+                break
         target_size = 1
 
         return target_idx, target_size
@@ -112,7 +152,7 @@ class Chaser(object):
         for ii in np.arange(AgentConstants.resolution):
             for jj in np.arange(AgentConstants.resolution):
                 if matrix[ii, jj] == 1:
-                    matrix[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis = 1).min()
+                    matrix[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis=1).min()
 
         return matrix
 

@@ -9,7 +9,8 @@ predefined_colors = {"green": [0.506, 0.749, 0.255],
                      "box_dark": [0.196, 0.165, 0.133],
                      "box_light": [0.318, 0.267, 0.22],
                      "UL": [0.435, 0.367, 0.2],
-                     "yellow": [0.733, 0.651, 0.506]}
+                     "yellow": [0.733, 0.651, 0.506],
+                     "sky_blue": [0.192, 0.302, 0.475]}
 predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin=3))[0, 0] \
                        for (k, v) in predefined_colors.items()}
 
@@ -19,10 +20,11 @@ center_of_view = [resolution / 2, resolution / 2]
 default_test_length = 1000
 
 # Perception limits of colors
-memory_size = 60
+memory_size = 200
 green_tolerance = 0.06510537801131308
 brown_tolerance = 0.001
-red_tolerance = 0.001
+red_tolerance = 0.05
+sky_blue_tolerance = 0.001
 # red_tolerance = 0.03996598639455783
 # orange_tolerance = 0.003284771042431224
 # box_dark_tolerance = 0.002362055933484493
@@ -60,6 +62,7 @@ roam_step_limit = 10
 minimal_dist_to_in_accessible = resolution / 4
 standpoint = [83, 41]
 path_consistent_ratio = 0.5
+idx0_grid, idx1_grid = np.meshgrid(np.arange(resolution), np.arange(resolution), indexing = "ij")
 
 # actions
 taxi = [0, 0]

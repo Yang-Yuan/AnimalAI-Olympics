@@ -18,13 +18,13 @@ import AgentConstants
 
 from handcraftedAgent import Agent
 
-# arenaConfigs = ['../examples/configs/1-Food.yaml',
-#                 '../examples/configs/2-Preferences.yaml',
-#                 '../examples/configs/3-Obstacles.yaml',
-#                 '../examples/configs/4-Avoidance.yaml',
-#                 '../examples/configs/5-SpatialReasoning.yaml',
-#                 '../examples/configs/6-Generalization.yaml',
-#                 '../examples/configs/7-InternalMemory.yaml']
+# arenaConfigs = [#'../examples/configs/1-Food.yaml',
+#                 '../examples/configs/2-Preferences.yaml']
+                # '../examples/configs/3-Obstacles.yaml',
+                # '../examples/configs/4-Avoidance.yaml',
+                # '../examples/configs/5-SpatialReasoning.yaml',
+                # '../examples/configs/6-Generalization.yaml',
+                # '../examples/configs/7-InternalMemory.yaml']
 
 # arenaConfigs = ['../configs/1-Food/single-static.yaml',
 #                 '../configs/1-Food/two-static.yaml',
@@ -39,8 +39,8 @@ from handcraftedAgent import Agent
 #                 '../configs/1-Food/three-mix.yaml',
 #                 '../configs/1-Food/multi-mix.yaml']
 
-arenaConfigs = ['../configs/234-POA/poa-1.yaml',
-                '../configs/234-POA/poa-2.yaml',
+arenaConfigs = [#'../configs/234-POA/poa-1.yaml',
+                #'../configs/234-POA/poa-2.yaml',
                 '../configs/234-POA/poa-3.yaml']
 
 env_path = '../env/AnimalAI'

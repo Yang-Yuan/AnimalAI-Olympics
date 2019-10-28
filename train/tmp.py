@@ -70,11 +70,15 @@ grid = Grid(matrix=matrix)
 
 
 start = grid.node(0, 0)
-end = grid.node(2, 2)
+end = grid.node(0, 0)
 
 finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 path, runs = finder.find_path(start, end, grid)
 
 print('operations:', runs, 'path length:', len(path))
 print(grid.grid_str(path=path, start=start, end=end))
+
+z = ([1, 2, 3], [4, 5, 6])
+for ii, jj in zip(*z):
+  print(ii + jj)
 

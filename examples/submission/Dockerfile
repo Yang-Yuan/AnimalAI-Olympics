@@ -22,6 +22,8 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
 
 ENV PATH /opt/conda/envs/python36/bin:/opt/conda/envs/bin:$PATH
 
+ENV PYTHONPATH "${PYTHONPATH}:/aaio"
+
 RUN pip install animalai
 
 COPY handcraftedAgent.py /aaio/agent.py
