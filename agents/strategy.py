@@ -1,11 +1,13 @@
 import AgentConstants
 import warnings
+import numpy as np
 
 
 class Strategy(object):
 
     def __init__(self, agent):
         self.agent = agent
+        self.static_step_n = None
 
     def run_strategy(self):
 
@@ -146,7 +148,17 @@ class Strategy(object):
         self.deadlock_breaker()
 
     def deadlock_breaker(self):
-        pass
+
+        if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right  \
+                or self.agent.currentAction == AgentConstants.taxi:
+            self.static_step_n += 1
+        else:
+            self.static_step_n = 0
+
+        if self.agent.actionStateMachine.is_chasing and self.static_step_n > AgentConstants.deadlock_step_limit:
+            self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
+            self.agent.actionStateMachine.rotate_to_direction()
+            self.static_step_n = 0
 
     def reset(self):
-        pass
+        self.static_step_n = 0

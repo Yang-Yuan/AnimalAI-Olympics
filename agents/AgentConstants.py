@@ -57,12 +57,14 @@ aim_error_limit = 5
 size_limit = 5
 hl = 2
 pirouette_step_limit = 60
+deadlock_step_limit = 120
 not_seeing_target_step_limit = 60
 roam_step_limit = 10
 minimal_dist_to_in_accessible = resolution / 4
 standpoint = [83, 41]
 path_consistent_ratio = 0.5
 idx0_grid, idx1_grid = np.meshgrid(np.arange(resolution), np.arange(resolution), indexing = "ij")
+directions_for_deadlock = np.arange(10, 20).tolist() + np.arange(40, 50).tolist()
 
 # actions
 taxi = [0, 0]

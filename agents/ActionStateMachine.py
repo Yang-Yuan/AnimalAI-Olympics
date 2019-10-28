@@ -33,7 +33,7 @@ class ActionStateMachine(StateMachine):
                 decelerating.to(pirouetting) | \
                 rotating_to_direction.to(pirouetting)
 
-    rotate_to_direction = pirouetting.to(rotating_to_direction)
+    rotate_to_direction = pirouetting.to(rotating_to_direction) | chasing.to(rotating_to_direction)
 
     roam = pirouetting.to(roaming) | \
            rotating_to_direction.to(roaming)
