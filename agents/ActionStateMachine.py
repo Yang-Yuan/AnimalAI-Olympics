@@ -30,15 +30,20 @@ class ActionStateMachine(StateMachine):
            decelerating.to.itself()
 
     pirouette = static.to(pirouetting) | \
-                decelerating.to(pirouetting) | \
-                rotating_to_direction.to(pirouetting)
+                rotating_to_direction.to(pirouetting) | \
+                searching.to(pirouetting) | \
+                decelerating.to(pirouetting)
 
-    rotate_to_direction = pirouetting.to(rotating_to_direction) | chasing.to(rotating_to_direction)
+    rotate_to_direction = pirouetting.to(rotating_to_direction) | \
+                          searching.to(rotating_to_direction) | \
+                          chasing.to(rotating_to_direction)
 
     roam = pirouetting.to(roaming) | \
-           rotating_to_direction.to(roaming)
+           rotating_to_direction.to(roaming) | \
+           searching.to(roaming)
 
     search = pirouetting.to(searching) | \
+             searching.to(searching) | \
              chasing.to(searching)
 
     chase = searching.to(chasing) | pirouetting.to(chasing) | rotating_to_direction.to(chasing) | roaming.to(chasing) \

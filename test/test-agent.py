@@ -39,8 +39,8 @@ from handcraftedAgent import Agent
 #                 '../configs/1-Food/three-mix.yaml',
 #                 '../configs/1-Food/multi-mix.yaml']
 
-arenaConfigs = [#'../configs/234-POA/poa-1.yaml',
-                #'../configs/234-POA/poa-2.yaml',
+arenaConfigs = ['../configs/234-POA/poa-1.yaml',
+                '../configs/234-POA/poa-2.yaml',
                 '../configs/234-POA/poa-3.yaml']
 
 env_path = '../env/AnimalAI'

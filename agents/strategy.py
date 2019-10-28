@@ -40,7 +40,8 @@ class Strategy(object):
                                 self.agent.actionStateMachine.roam()
                                 break
                             else:
-                                self.agent.actionStateMachine.pirouette()
+                                self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
+                                self.agent.actionStateMachine.rotate_to_direction()
                                 break
                         else:
                             self.agent.actionStateMachine.rotate_to_direction()
