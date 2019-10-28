@@ -61,13 +61,14 @@ class Chaser(object):
         end = path[1]
         for point in path[1:]:
             clear = True
-            for jj in np.arange(AgentConstants.resolution):
-                line_seg_idx = tuple(np.array(list(bresenham(83, jj,
-                                                             point[1], point[0]))).transpose())
-                line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
-                if line_seg_is_inaccessible.any():
-                    clear = False
-                    break
+            line_seg_idx = tuple(np.array(list(bresenham(83, 0, point[1], point[0]))).transpose())
+            line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
+            if line_seg_is_inaccessible.any():
+                clear = False
+            line_seg_idx = tuple(np.array(list(bresenham(83, 83, point[1], point[0]))).transpose())
+            line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
+            if line_seg_is_inaccessible.any():
+                clear = False
 
             if clear:
                 end = point
