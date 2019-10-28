@@ -21,7 +21,7 @@ default_test_length = 1000
 
 # Perception limits of colors
 memory_size = 200
-green_tolerance = 0.06510537801131308
+green_tolerance = 0.075
 brown_tolerance = 0.001
 red_tolerance = 0.05
 sky_blue_tolerance = 0.001
@@ -57,7 +57,7 @@ aim_error_limit = 5
 size_limit = 5
 hl = 2
 pirouette_step_limit = 60
-deadlock_step_limit = 120
+deadlock_step_limit = 60
 not_seeing_target_step_limit = 60
 roam_step_limit = 10
 minimal_dist_to_in_accessible = resolution / 4

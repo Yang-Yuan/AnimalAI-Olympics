@@ -149,15 +149,19 @@ class Strategy(object):
 
     def deadlock_breaker(self):
 
-        if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right  \
-                or self.agent.currentAction == AgentConstants.taxi:
-            self.static_step_n += 1
-        else:
-            self.static_step_n = 0
+        if self.agent.actionStateMachine.is_chasing:
 
-        if self.agent.actionStateMachine.is_chasing and self.static_step_n > AgentConstants.deadlock_step_limit:
-            self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
-            self.agent.actionStateMachine.rotate_to_direction()
+            if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right \
+                    or self.agent.currentAction == AgentConstants.taxi:
+                self.static_step_n += 1
+            else:
+                self.static_step_n = 0
+
+            if self.static_step_n > AgentConstants.deadlock_step_limit:
+                self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
+                self.agent.actionStateMachine.rotate_to_direction()
+                self.static_step_n = 0
+        else:
             self.static_step_n = 0
 
     def reset(self):
