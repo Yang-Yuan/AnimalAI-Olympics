@@ -40,7 +40,8 @@ class ActionStateMachine(StateMachine):
     chase = searching.to(chasing) | \
             rotating_to_direction.to(chasing) | \
             roaming.to(chasing) | \
-            chasing.to(chasing)
+            chasing.to(chasing) | \
+            decelerating.to(chasing)
 
     decelerate = chasing.to(decelerating) | \
                  roaming.to(decelerating)
