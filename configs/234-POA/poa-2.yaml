@@ -4,7 +4,7 @@ arenas:
     t: 1000
     items:
     - !Item
-      name: GoodGoal
+      name: GoodGoalBounce
       sizes:
       - !Vector3 {x: 1, y: 1, z: 1}
     - !Item
@@ -15,3 +15,4 @@ arenas:
       name: Wall
       colors:
       - !RGB {r: 153, g: 153, b: 153}
+

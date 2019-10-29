@@ -33,7 +33,7 @@ COPY ActionStateMachine.py /aaio/ActionStateMachine.py
 COPY chaser.py /aaio/chaser.py
 COPY AgentConstants.py /aaio/AgentConstants.py
 COPY agentUtils.py /aaio/agentUtils.py
-COPY data /aaio/data
+#COPY data /aaio/data
 
 ENV HTTP_PROXY ""
 ENV HTTPS_PROXY ""

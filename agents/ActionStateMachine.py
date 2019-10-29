@@ -6,54 +6,46 @@ class ActionStateMachine(StateMachine):
     # ************************** states ***************************
     static = State("static", initial=True)
     # 1 agent not moving, initial state
-    pirouetting = State("pirouetting")
-    # 2 rotating in situ to observe
+    searching = State("searching")
+    # 2 searching for a specific color
     rotating_to_direction = State("rotating_to_direction")
     # 3 not finding any good balls
     roaming = State("roaming")
     # 4 moving forward for a distance if possible
-    searching = State("searching")
-    # 5 targeting a specific color
     chasing = State("chasing")
-    # 6 avoiding the bad zones
+    # 5 avoiding the bad zones
     decelerating = State("decelerating")
-    # 7 let the speed decrease spontaneously
+    # 6 let the speed decrease spontaneously
     # ************************** states end ***************************
 
     # ************************** actions ***************************
     hold = static.to.itself() | \
-           pirouetting.to.itself() | \
            rotating_to_direction.to.itself() | \
            roaming.to.itself() | \
            searching.to.itself() | \
            chasing.to.itself() | \
            decelerating.to.itself()
 
-    pirouette = static.to(pirouetting) | \
-                rotating_to_direction.to(pirouetting) | \
-                searching.to(pirouetting) | \
-                decelerating.to(pirouetting)
-
-    rotate_to_direction = pirouetting.to(rotating_to_direction) | \
-                          searching.to(rotating_to_direction) | \
+    rotate_to_direction = searching.to(rotating_to_direction) | \
                           chasing.to(rotating_to_direction)
 
-    roam = pirouetting.to(roaming) | \
-           rotating_to_direction.to(roaming) | \
+    roam = rotating_to_direction.to(roaming) | \
            searching.to(roaming)
 
-    search = pirouetting.to(searching) | \
+    search = static.to(searching) | \
              searching.to(searching) | \
-             chasing.to(searching)
+             decelerating.to(searching) | \
+             rotating_to_direction.to(searching)
 
-    chase = searching.to(chasing) | pirouetting.to(chasing) | rotating_to_direction.to(chasing) | roaming.to(chasing) \
-            | chasing.to(chasing)
+    chase = searching.to(chasing) | \
+            rotating_to_direction.to(chasing) | \
+            roaming.to(chasing) | \
+            chasing.to(chasing)
 
     decelerate = chasing.to(decelerating) | \
                  roaming.to(decelerating)
 
     reset = static.to.itself() | \
-            pirouetting.to(static) | \
             rotating_to_direction.to(static) | \
             roaming.to(static) | \
             searching.to(static) | \
@@ -66,19 +58,10 @@ class ActionStateMachine(StateMachine):
         self.agent = agent
         super(ActionStateMachine, self).__init__()
 
-    # ************************** callbacks for pirouette ***************************
-
-    def on_pirouette(self):
-        # print("on_pirouette~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.pirouette_step_n = 0
-
-    def on_enter_pirouetting(self):
-        # print("on_enter_pirouetting: {}".format(self.agent.pirouette_step_n))
-        self.agent.currentAction = AgentConstants.left
-        self.agent.pirouette_step_n += 1
-        self.agent.perception.renew_target_from_panorama()
-
-    # ************************** callbacks for pirouette end***************************
+    # ************************** callbacks for static ***************************
+    def on_enter_static(self):
+        self.agent.search_direction = AgentConstants.left
+    # ************************** callbacks for static end***************************
 
     # ************************** callbacks for roam ***************************
     def on_roam(self):
@@ -98,7 +81,7 @@ class ActionStateMachine(StateMachine):
 
     def on_enter_searching(self):
         # print("on_enter_searching: {}".format(self.agent.pirouette_step_n))
-        self.agent.currentAction = AgentConstants.left
+        self.agent.currentAction = self.agent.search_direction
         self.agent.pirouette_step_n += 1
         self.agent.perception.renew_target_from_panorama()
 
@@ -123,6 +106,9 @@ class ActionStateMachine(StateMachine):
     # ************************** callbacks for rotate_to_direction end***************************
 
     # ************************** callbacks for decelerate ***************************
+    def on_decelerate(self):
+        self.agent.target_color = "brown"
+
     def on_enter_decelerating(self):
         # print("on_enter_decelerating~~~~~~~~~~~~~~~~~~~~~")
         self.agent.currentAction = AgentConstants.taxi

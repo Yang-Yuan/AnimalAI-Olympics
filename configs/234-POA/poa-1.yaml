@@ -4,9 +4,9 @@ arenas:
     t: 1000
     items:
     - !Item
-      name: GoodGoal
+      name: GoodGoalBounce
     - !Item
-      name: GoodGoalMulti
+      name: GoodGoalMultiBounce
       rotations: [0, 45]
     - !Item
       name: BadGoal

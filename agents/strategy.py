@@ -21,66 +21,11 @@ class Strategy(object):
             # if the agent is static
             if self.agent.actionStateMachine.is_static:
                 if 0 == self.agent.pirouette_step_n:
-                    self.agent.actionStateMachine.pirouette()
+                    self.agent.actionStateMachine.search()
                     break
                 else:
                     warnings.warn("undefined branch!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                     self.agent.actionStateMachine.reset()
-                    break
-
-            # if the agent is pirouetting
-            elif self.agent.actionStateMachine.is_pirouetting:
-                if self.agent.pirouette_step_n < AgentConstants.pirouette_step_limit:
-                    self.agent.actionStateMachine.hold()
-                    break
-                else:
-                    if self.agent.target_color is None:
-                        if self.agent.safest_direction == 0:
-                            if self.agent.perception.is_front_safe():
-                                self.agent.actionStateMachine.roam()
-                                break
-                            else:
-                                self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
-                                self.agent.actionStateMachine.rotate_to_direction()
-                                break
-                        else:
-                            self.agent.actionStateMachine.rotate_to_direction()
-                            break
-                    else:
-                        if self.agent.perception.is_found():
-                            self.agent.actionStateMachine.chase()
-                            break
-                        else:
-                            self.agent.actionStateMachine.search()
-                            break
-
-            # if the agent is rotating_to_direction
-            elif self.agent.actionStateMachine.is_rotating_to_direction:
-                if self.agent.safest_direction == 0:
-                    if self.agent.perception.is_front_safe():
-                        self.agent.actionStateMachine.roam()
-                        break
-                    else:
-                        self.agent.actionStateMachine.pirouette()
-                        break
-                else:
-                    if self.agent.perception.renew_target():
-                        self.agent.actionStateMachine.chase()
-                        break
-                    else:
-                        self.agent.actionStateMachine.hold()
-                        break
-
-            # if the agent is roaming
-            elif self.agent.actionStateMachine.is_roaming:
-                if self.agent.perception.renew_target():
-                    self.agent.actionStateMachine.chase()
-                    break
-                elif self.agent.perception.is_front_safe() and not self.agent.perception.is_nearly_static():
-                    self.agent.actionStateMachine.hold()
-                    break
-                else:
-                    self.agent.actionStateMachine.decelerate()
                     break
 
             # if the agent is searching
@@ -93,24 +38,40 @@ class Strategy(object):
                         self.agent.actionStateMachine.hold()
                         break
                     else:
-                        if self.agent.target_color is None:
-                            if self.agent.safest_direction == 0:
-                                if self.agent.perception.is_front_safe():
-                                    self.agent.actionStateMachine.roam()
-                                    break
-                                else:
-                                    self.agent.actionStateMachine.pirouette()
-                                    break
-                            else:
-                                self.agent.actionStateMachine.rotate_to_direction()
-                                break
+                        if self.agent.safest_direction is not None:
+                            self.agent.actionStateMachine.rotate_to_direction()
+                            break
                         else:
-                            if self.agent.perception.is_found():
-                                self.agent.actionStateMachine.chase()
-                                break
-                            else:
-                                self.agent.actionStateMachine.search()
-                                break
+                            self.agent.actionStateMachine.search()
+                            break
+
+            # if the agent is rotating_to_direction
+            elif self.agent.actionStateMachine.is_rotating_to_direction:
+                if self.agent.perception.is_found():
+                    self.agent.actionStateMachine.chase()
+                    break
+                elif self.agent.safest_direction == 0:
+                    if self.agent.perception.is_front_safe():
+                        self.agent.actionStateMachine.roam()
+                        break
+                    else:
+                        self.agent.actionStateMachine.search()
+                        break
+                else:
+                    self.agent.actionStateMachine.hold()
+                    break
+
+            # if the agent is roaming
+            elif self.agent.actionStateMachine.is_roaming:
+                if self.agent.perception.is_found():
+                    self.agent.actionStateMachine.chase()
+                    break
+                elif self.agent.perception.is_front_safe() and not self.agent.perception.is_nearly_static():
+                    self.agent.actionStateMachine.hold()
+                    break
+                else:
+                    self.agent.actionStateMachine.decelerate()
+                    break
 
             # if the agent is chasing
             elif self.agent.actionStateMachine.is_chasing:
@@ -123,6 +84,7 @@ class Strategy(object):
                         break
                 elif self.agent.chase_failed:
                     self.agent.actionStateMachine.decelerate()
+                    break
                 else:
                     if self.agent.not_seeing_target_step_n < AgentConstants.not_seeing_target_step_limit:
                         self.agent.actionStateMachine.hold()
@@ -133,8 +95,11 @@ class Strategy(object):
 
             # if the agent is decelerating
             elif self.agent.actionStateMachine.is_decelerating:
-                if self.agent.perception.is_static():
-                    self.agent.actionStateMachine.pirouette()
+                if self.agent.perception.is_found():
+                    self.agent.actionStateMachine.chase()
+                    break
+                elif self.agent.perception.is_static():
+                    self.agent.actionStateMachine.search()
                     break
                 else:
                     self.agent.actionStateMachine.hold()
@@ -152,8 +117,13 @@ class Strategy(object):
 
         if self.agent.actionStateMachine.is_chasing:
 
-            if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right \
-                    or self.agent.currentAction == AgentConstants.taxi:
+            # if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right \
+            #         or self.agent.currentAction == AgentConstants.taxi:
+            #     self.static_step_n += 1
+            # else:
+            #     self.static_step_n = 0
+
+            if self.agent.perception.is_nearly_static():
                 self.static_step_n += 1
             else:
                 self.static_step_n = 0

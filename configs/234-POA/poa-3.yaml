@@ -4,13 +4,13 @@ arenas:
     t: 1000
     items:
     - !Item
-      name: GoodGoal
+      name: GoodGoalBounce
       sizes:
       - !Vector3 {x: 1, y: 1, z: 1}
     - !Item
       name: DeathZone
     - !Item
-      name: GoodGoalMulti
+      name: GoodGoalMultiBounce
       rotations: [0, 45]
     - !Item
       name: BadGoal

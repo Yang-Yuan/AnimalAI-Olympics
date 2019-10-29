@@ -67,23 +67,29 @@ class Perception(object):
 
         if self.agent.pirouette_step_n == AgentConstants.pirouette_step_limit:
 
-            self.agent.target_color = None
-            self.agent.safest_direction = None
-
-            if np.array(self.agent.is_brown_memory.queue)[-AgentConstants.pirouette_step_limit:].any():
-                self.agent.target_color = "brown"
-            elif np.array(self.agent.is_green_memory.queue)[-AgentConstants.pirouette_step_limit:].any():
+            green_memory = np.array(self.agent.is_green_memory.queue)[-AgentConstants.pirouette_step_limit:]
+            if green_memory.any():
                 self.agent.target_color = "green"
-            else:
-                is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
-                if is_yellow.any():
-                    self.agent.safest_direction = np.argmax(
-                        [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in is_yellow])
+                best_direction = green_memory.sum(axis = (1, 2)).argmax()
+                if 0 <= best_direction < 30:
+                    if self.agent.search_direction == AgentConstants.left:
+                        self.agent.search_direction = AgentConstants.left
+                    else:
+                        self.agent.search_direction = AgentConstants.right
                 else:
-                    warnings.warn("Nowhere to go, just move forward")
-                    self.agent.safest_direction = 0
-            # print("target_color renewed: {} and safest_direction renewed: {}".format(self.agent.target_color,
-            #                                                                          self.agent.safest_direction))
+                    if self.agent.search_direction == AgentConstants.left:
+                        self.agent.search_direction = AgentConstants.right
+                    else:
+                        self.agent.search_direction = AgentConstants.left
+            else:
+                self.agent.safest_direction = np.random.choice(AgentConstants.pirouette_step_limit)
+                # is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
+                # if is_yellow.any():
+                #     self.agent.safest_direction = np.argmax(
+                #         [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in is_yellow])
+                # else:
+                #     warnings.warn("Nowhere to go, just move forward")
+                #     self.agent.safest_direction = 0
 
     def renew_target(self):
 
@@ -162,24 +168,22 @@ class Perception(object):
             return None, None
 
     def update_target(self):
-        if self.agent.target_color is None:
+
+        if self.agent.is_brown.any():
+            self.agent.target_color = "brown"
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_brown)
+            return
+        elif self.agent.target_color == "green" and self.agent.is_green.any():
+            self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
+                self.agent.is_green)
             return
         else:
-            if self.agent.target_color == "green":
-                self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
-                    self.agent.is_green)
-                return
-            elif self.agent.target_color == "brown":
-                self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
-                    self.agent.is_brown)
-                return
-            else:
-                warnings.warn("unkown corlor!!!!!!!!!!!!!!!!!!")
-                # sys.exit(1)
-                return
+            self.agent.reachable_target_idx = None
+            self.agent.reachable_target_size = None
 
     def update_nearest_inaccessible_idx(self):
-        idx = np.argwhere(AgentConstants.road_mask & self.agent.is_inaccessible)
+        idx = np.argwhere(AgentConstants.road_mask & self.agent.is_red)
         if 0 == len(idx):
             self.agent.nearest_inaccessible_idx = None
         else:

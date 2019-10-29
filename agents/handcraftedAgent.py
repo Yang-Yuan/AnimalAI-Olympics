@@ -60,10 +60,11 @@ class Agent(object):
 
         # strategy-related variables
         self.pirouette_step_n = None
-        self.target_color = None
+        self.target_color = "brown"
         self.safest_direction = None
         self.not_seeing_target_step_n = None
         self.chase_failed = None
+        self.search_direction = None
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t=250):
@@ -122,6 +123,7 @@ class Agent(object):
         self.safest_direction = None
         self.not_seeing_target_step_n = None
         self.chase_failed = None
+        self.search_direction = AgentConstants.left
 
     def step(self, obs, reward, done, info):
         """

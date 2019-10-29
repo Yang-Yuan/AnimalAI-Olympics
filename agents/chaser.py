@@ -87,7 +87,7 @@ class Chaser(object):
 
         start = path[0]
         end = path[1]
-        for point in path[1:]:
+        for point in path[::-1]:
             clear = True
             line_seg_idx = tuple(np.array(list(bresenham(83, min_col, point[1], point[0]))).transpose())
             line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
@@ -100,7 +100,6 @@ class Chaser(object):
 
             if clear:
                 end = point
-            else:
                 break
 
         self.newest_end = end
@@ -136,7 +135,7 @@ class Chaser(object):
                    abs(AgentConstants.idx1_grid - np.full((AgentConstants.resolution, AgentConstants.resolution),
                                                           self.newest_target_idx[1]))
         ascending_distance_idx = np.unravel_index(distance.flatten().argsort(),
-                                                  shape=(AgentConstants.resolution, AgentConstants.resolution))
+                                                  (AgentConstants.resolution, AgentConstants.resolution))
         target_idx = None
         for ii, jj in zip(*ascending_distance_idx):
             if not self.agent.is_inaccessible[ii, jj]:
