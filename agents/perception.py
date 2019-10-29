@@ -39,14 +39,15 @@ class Perception(object):
         self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
             "red")) < AgentConstants.red_tolerance
         self.agent.is_red = self.puff_red(delta=2)
-        self.agent.is_gray = (self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1]) & \
-                             (self.agent.obs_visual[:, :, 1] == self.agent.obs_visual[:, :, 2])
-        self.agent.is_blue = (self.agent.obs_visual[:, :, 0] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[0] < AgentConstants.sky_blue_tolerance) & \
-                             (self.agent.obs_visual[:, :, 1] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[1] < AgentConstants.sky_blue_tolerance) & \
-                             (self.agent.obs_visual[:, :, 2] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[2] < AgentConstants.sky_blue_tolerance)
+        self.agent.is_gray = np.logical_and((self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1]),
+                                            (self.agent.obs_visual[:, :, 1] == self.agent.obs_visual[:, :, 2]))
+        self.agent.is_blue = np.logical_and(np.logical_and(
+                                abs(self.agent.obs_visual[:, :, 0] - AgentConstants.predefined_colors.get(
+                                 "sky_blue")[0]) < AgentConstants.sky_blue_tolerance,
+                                abs(self.agent.obs_visual[:, :, 1] - AgentConstants.predefined_colors.get(
+                                 "sky_blue")[1]) < AgentConstants.sky_blue_tolerance),
+                                abs(self.agent.obs_visual[:, :, 2] - AgentConstants.predefined_colors.get(
+                                 "sky_blue")[2]) < AgentConstants.sky_blue_tolerance)
         # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
         #     "orange")) < AgentConstants.orange_tolerance
         self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
@@ -183,7 +184,7 @@ class Perception(object):
             self.agent.reachable_target_size = None
 
     def update_nearest_inaccessible_idx(self):
-        idx = np.argwhere(AgentConstants.road_mask & self.agent.is_red)
+        idx = np.argwhere(np.logical_and(AgentConstants.road_mask, self.agent.is_red))
         if 0 == len(idx):
             self.agent.nearest_inaccessible_idx = None
         else:
@@ -196,7 +197,9 @@ class Perception(object):
             new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (delt, 0), cval=False))
             new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, -delt), cval=False))
             new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, delt), cval=False))
-        new_is_red = new_is_red & np.logical_not(self.agent.is_green) & np.logical_not(self.agent.is_brown)
+        new_is_red = np.logical_and(np.logical_and(new_is_red,
+                                                   np.logical_not(self.agent.is_green)),
+                                                   np.logical_not(self.agent.is_brown))
         return new_is_red
 
     def reset(self):

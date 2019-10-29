@@ -87,7 +87,7 @@ class Chaser(object):
 
         start = path[0]
         end = path[1]
-        for point in path[::-1]:
+        for point in path[1:]:
             clear = True
             line_seg_idx = tuple(np.array(list(bresenham(83, min_col, point[1], point[0]))).transpose())
             line_seg_is_inaccessible = self.agent.is_inaccessible[line_seg_idx]
@@ -100,6 +100,7 @@ class Chaser(object):
 
             if clear:
                 end = point
+            else:
                 break
 
         self.newest_end = end
