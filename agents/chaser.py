@@ -63,29 +63,29 @@ class Chaser(object):
 
     def generate_action(self, path, target_idx, target_size):
 
-        min_col = 0
-        max_col = 83
-        # min_col = None
-        # for jj in np.arange(AgentConstants.resolution):
-        #     if not self.agent.is_inaccessible[83, jj]:
-        #         min_col = jj
-        #         break
-        # if min_col is None:
-        #     warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #     self.agent.currentAction = AgentConstants.taxi
-        #     self.agent.chase_failed = True
-        #     return
-        #
-        # max_col = None
-        # for jj in np.arange(AgentConstants.resolution)[::-1]:
-        #     if not self.agent.is_inaccessible[83, jj]:
-        #         max_col = jj
-        #         break
-        # if max_col is None:
-        #     warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #     self.agent.currentAction = AgentConstants.taxi
-        #     self.agent.chase_failed = True
-        #     return
+        # min_col = 0
+        # max_col = 83
+        min_col = None
+        for jj in np.arange(AgentConstants.resolution):
+            if not self.agent.is_inaccessible[83, jj]:
+                min_col = jj
+                break
+        if min_col is None:
+            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
+
+        max_col = None
+        for jj in np.arange(AgentConstants.resolution)[::-1]:
+            if not self.agent.is_inaccessible[83, jj]:
+                max_col = jj
+                break
+        if max_col is None:
+            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.agent.currentAction = AgentConstants.taxi
+            self.agent.chase_failed = True
+            return
 
         start = path[0]
         end = path[1]
@@ -131,7 +131,10 @@ class Chaser(object):
             elif self.agent.obs_vector[0, 0] > 0.5:
                 return AgentConstants.forward_left
             else:
-                return AgentConstants.forward
+                if self.agent.obs_vector[0, 2] > 10:
+                    return AgentConstants.taxi
+                else:
+                    return AgentConstants.forward
 
     def imagine_target(self):
 

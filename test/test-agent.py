@@ -47,6 +47,7 @@ env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
 
 seed = 333
+np.random.seed(333)
 base_port = 5005
 sub_id = 1
 run_id = 'train_example'

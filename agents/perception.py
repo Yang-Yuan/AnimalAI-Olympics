@@ -38,11 +38,11 @@ class Perception(object):
                              < AgentConstants.red_tolerance).all(axis=2)
         self.agent.is_red = self.agent.is_red if agentUtils.is_color_significant(
             self.agent.is_red, AgentConstants.red_size_limit) else AgentConstants.all_false
-        self.agent.is_red = self.puff_red(delta=1)
-        self.agent.is_gray = np.logical_and((self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1]),
-                                            (self.agent.obs_visual[:, :, 1] == self.agent.obs_visual[:, :, 2]))
+        self.agent.is_red = self.puff_red(delta=3)
+        self.agent.is_gray = np.logical_and(abs(self.agent.obs_visual[:, :, 0] - self.agent.obs_visual[:, :, 1]) < 0.001,
+                                            abs(self.agent.obs_visual[:, :, 1] - self.agent.obs_visual[:, :, 2]) < 0.001)
         self.agent.is_gray = self.agent.is_gray if agentUtils.is_color_significant(
-            self.agent.is_brown, AgentConstants.gray_size_limit) else AgentConstants.all_false
+            self.agent.is_gray, AgentConstants.gray_size_limit) else AgentConstants.all_false
         self.agent.is_blue = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("sky_blue")).max(
             axis=2) < AgentConstants.sky_blue_tolerance
         self.agent.is_yellow = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get(
