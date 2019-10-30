@@ -8,9 +8,9 @@ from matplotlib import pyplot as plt
 from handcraftedAgent import Agent
 import AgentConstants
 
-# config files to test my handcrafted agent
-arenaConfigs = ['../configs/234-POA/poa-1.yaml',
-                '../configs/234-POA/poa-2.yaml',
+# arena config files used to test my handcrafted agent
+arenaConfigs = [#'../configs/234-POA/poa-1.yaml',
+                #'../configs/234-POA/poa-2.yaml',
                 '../configs/234-POA/poa-3.yaml',
                 '../configs/1-Food/single-static.yaml',
                 '../configs/1-Food/two-static.yaml',

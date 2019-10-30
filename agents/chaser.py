@@ -31,7 +31,7 @@ class Chaser(object):
 
         if imaginary_target_idx is None:
             warnings.warn("Can't imagine a target to chase!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
+            self.agent.current_action = AgentConstants.taxi
             self.agent.chase_failed = True
             return
 
@@ -49,12 +49,12 @@ class Chaser(object):
 
         if path is None or len(path) <= 1:
             warnings.warn("Can't find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
+            self.agent.current_action = AgentConstants.taxi
             self.agent.chase_failed = True
             return
 
         self.newest_path = path
-        self.agent.currentAction = self.generate_action(path, target_idx, target_size)
+        self.agent.current_action = self.generate_action(path, target_idx, target_size)
 
     # def is_new_critical_point_in_path(self, line_idx, idx0, idx1):
     #     return 0 <= idx0 < AgentConstants.resolution and 0 <= idx1 < AgentConstants.resolution \
@@ -72,7 +72,7 @@ class Chaser(object):
                 break
         if min_col is None:
             warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
+            self.agent.current_action = AgentConstants.taxi
             self.agent.chase_failed = True
             return
 
@@ -83,7 +83,7 @@ class Chaser(object):
                 break
         if max_col is None:
             warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
+            self.agent.current_action = AgentConstants.taxi
             self.agent.chase_failed = True
             return
 

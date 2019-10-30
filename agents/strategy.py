@@ -38,7 +38,7 @@ class Strategy(object):
                         self.agent.actionStateMachine.hold()
                         break
                     else:
-                        if self.agent.safest_direction is not None:
+                        if self.agent.exploratory_direction is not None:
                             self.agent.actionStateMachine.rotate_to_direction()
                             break
                         else:
@@ -50,7 +50,7 @@ class Strategy(object):
                 if self.agent.perception.is_found():
                     self.agent.actionStateMachine.chase()
                     break
-                elif self.agent.safest_direction == 0:
+                elif self.agent.exploratory_direction == 0:
                     if self.agent.perception.is_front_safe():
                         self.agent.actionStateMachine.roam()
                         break
@@ -129,7 +129,7 @@ class Strategy(object):
                 self.static_step_n = 0
 
             if self.static_step_n > AgentConstants.deadlock_step_limit:
-                self.agent.safest_direction = np.random.choice(AgentConstants.directions_for_deadlock)
+                self.agent.exploratory_direction = np.random.choice(AgentConstants.directions_for_deadlock)
                 self.agent.actionStateMachine.rotate_to_direction()
                 self.static_step_n = 0
         else:

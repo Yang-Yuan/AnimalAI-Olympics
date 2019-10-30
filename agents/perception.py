@@ -1,9 +1,7 @@
 import AgentConstants
 import numpy as np
-import warnings
 from skimage import measure
 import agentUtils
-from scipy.ndimage.interpolation import shift
 
 
 class Perception(object):
@@ -13,16 +11,14 @@ class Perception(object):
 
     def perceive(self):
 
-        if self.agent.visual_h_memory.full():
-            self.agent.visual_h_memory.get()
+        if self.agent.visual_hsv_memory.full():
+            self.agent.visual_hsv_memory.get()
         if self.agent.is_green_memory.full():
             self.agent.is_green_memory.get()
         if self.agent.is_brown_memory.full():
             self.agent.is_brown_memory.get()
         if self.agent.is_red_memory.full():
             self.agent.is_red_memory.get()
-        # if self.agent.is_orange_memory.full():
-        #     self.agent.is_orange_memory.get()
         if self.agent.is_yellow_memory.full():
             self.agent.is_yellow_memory.get()
         if self.agent.vector_memory.full():
@@ -51,11 +47,10 @@ class Perception(object):
         self.update_target()
         self.update_nearest_inaccessible_idx()
 
-        self.agent.visual_h_memory.put(self.agent.obs_visual_hsv)
+        self.agent.visual_hsv_memory.put(self.agent.obs_visual_hsv)
         self.agent.is_green_memory.put(self.agent.is_green)
         self.agent.is_brown_memory.put(self.agent.is_brown)
         self.agent.is_red_memory.put(self.agent.is_red)
-        # self.agent.is_orange_memory.put(self.agent.is_orange)
         self.agent.is_yellow_memory.put(self.agent.is_yellow)
         self.agent.vector_memory.put(self.agent.obs_vector[0])
 
@@ -77,10 +72,10 @@ class Perception(object):
                         self.agent.search_direction = AgentConstants.right
                     else:
                         self.agent.search_direction = AgentConstants.left
-                self.agent.safest_direction = None
+                self.agent.exploratory_direction = None
 
             else:
-                self.agent.safest_direction = np.random.choice(AgentConstants.pirouette_step_limit)
+                self.agent.exploratory_direction = np.random.choice(AgentConstants.pirouette_step_limit)
                 self.agent.target_color = "brown"
                 # is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
                 # if is_yellow.any():

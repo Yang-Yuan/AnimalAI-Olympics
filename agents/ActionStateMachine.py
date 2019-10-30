@@ -71,7 +71,7 @@ class ActionStateMachine(StateMachine):
 
     def on_enter_roaming(self):
         # print("on_roaming~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.currentAction = AgentConstants.forward
+        self.agent.current_action = AgentConstants.forward
 
     # ************************** callbacks for roam end***************************
 
@@ -82,7 +82,7 @@ class ActionStateMachine(StateMachine):
 
     def on_enter_searching(self):
         # print("on_enter_searching: {}".format(self.agent.pirouette_step_n))
-        self.agent.currentAction = self.agent.search_direction
+        self.agent.current_action = self.agent.search_direction
         self.agent.pirouette_step_n += 1
         self.agent.perception.renew_target_from_panorama()
 
@@ -98,10 +98,10 @@ class ActionStateMachine(StateMachine):
     def on_enter_rotating_to_direction(self):
         # print("on_enter_rotating_to_direction~~~~~~~~~~~~~~~~~")
         if self.agent.safest_direction > 0:
-            self.agent.currentAction = AgentConstants.left
+            self.agent.current_action = AgentConstants.left
             self.agent.safest_direction -= 1
         else:
-            self.agent.currentAction = AgentConstants.right
+            self.agent.current_action = AgentConstants.right
             self.agent.safest_direction += 1
 
     # ************************** callbacks for rotate_to_direction end***************************
@@ -112,7 +112,7 @@ class ActionStateMachine(StateMachine):
 
     def on_enter_decelerating(self):
         # print("on_enter_decelerating~~~~~~~~~~~~~~~~~~~~~")
-        self.agent.currentAction = AgentConstants.taxi
+        self.agent.current_action = AgentConstants.taxi
 
     # ************************** callbacks for decelerate end***************************
 
