@@ -54,7 +54,7 @@ class Perception(object):
         self.agent.is_green_memory.put(self.agent.is_green)
         self.agent.is_brown_memory.put(self.agent.is_brown)
         self.agent.is_red_memory.put(self.agent.is_red)
-        self.agent.vector_memory.put(self.agent.obs_vector[0])
+        self.agent.vector_memory.put(self.agent.obs_vector)
 
     def renew_target_from_panorama(self):
 

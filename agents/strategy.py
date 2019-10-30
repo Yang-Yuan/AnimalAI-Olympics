@@ -7,133 +7,138 @@ class Strategy(object):
 
     def __init__(self, agent):
         self.agent = agent
-        self.static_step_n = None
 
     def run_strategy(self):
+        '''
+        Using the primitive and high-level perception,
+        this method will set the agent's action which will be return to the env.
+        :return:
+        '''
 
-        # if done
+        # if the env signals the end of the current test, do nothing (taxi is the action of [0, 0])
         if self.agent.done:
             self.agent.currentAction = AgentConstants.taxi
             return
 
+        # this big while loop is the main part of my strategy.
+        # It is using a state machine defined in ActionStateMachine.py to implement the strategy.
+        # Basically, it determines which state the state machine is in, and then decides which action
+        # it should take to move to the next state. By action, here I mean the actions of the state machine
+        # (the edges of state machine graph if you like). It is different from the actions of the agent, which are
+        # to move forward or backward and turn left or right. The former is high-level actions, while the later is
+        # low-level actions.
         while True:
 
-            # if the agent is static
-            if self.agent.actionStateMachine.is_static:
+            # if the state is static
+            if self.agent.action_state_machine.is_static:
                 if 0 == self.agent.pirouette_step_n:
-                    self.agent.actionStateMachine.search()
+                    self.agent.action_state_machine.search()
                     break
                 else:
                     warnings.warn("undefined branch!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                    self.agent.actionStateMachine.reset()
+                    self.agent.action_state_machine.reset()
                     break
 
-            # if the agent is searching
-            elif self.agent.actionStateMachine.is_searching:
+            # if the state is searching
+            elif self.agent.action_state_machine.is_searching:
                 if self.agent.perception.is_found():
-                    self.agent.actionStateMachine.chase()
+                    self.agent.action_state_machine.chase()
                     break
                 else:
                     if self.agent.pirouette_step_n < AgentConstants.pirouette_step_limit:
-                        self.agent.actionStateMachine.hold()
+                        self.agent.action_state_machine.hold()
                         break
                     else:
                         if self.agent.exploratory_direction is not None:
-                            self.agent.actionStateMachine.rotate_to_direction()
+                            self.agent.action_state_machine.rotate_to_direction()
                             break
                         else:
-                            self.agent.actionStateMachine.search()
+                            self.agent.action_state_machine.search()
                             break
 
-            # if the agent is rotating_to_direction
-            elif self.agent.actionStateMachine.is_rotating_to_direction:
+            # if the state is rotating_to_direction
+            elif self.agent.action_state_machine.is_rotating_to_direction:
                 if self.agent.perception.is_found():
-                    self.agent.actionStateMachine.chase()
+                    self.agent.action_state_machine.chase()
                     break
                 elif self.agent.exploratory_direction == 0:
                     if self.agent.perception.is_front_safe():
-                        self.agent.actionStateMachine.roam()
+                        self.agent.action_state_machine.roam()
                         break
                     else:
-                        self.agent.actionStateMachine.search()
+                        self.agent.action_state_machine.search()
                         break
                 else:
-                    self.agent.actionStateMachine.hold()
+                    self.agent.action_state_machine.hold()
                     break
 
-            # if the agent is roaming
-            elif self.agent.actionStateMachine.is_roaming:
+            # if the state is roaming
+            elif self.agent.action_state_machine.is_roaming:
                 if self.agent.perception.is_found():
-                    self.agent.actionStateMachine.chase()
+                    self.agent.action_state_machine.chase()
                     break
                 elif self.agent.perception.is_front_safe() and not self.agent.perception.is_nearly_static():
-                    self.agent.actionStateMachine.hold()
+                    self.agent.action_state_machine.hold()
                     break
                 else:
-                    self.agent.actionStateMachine.decelerate()
+                    self.agent.action_state_machine.decelerate()
                     break
 
-            # if the agent is chasing
-            elif self.agent.actionStateMachine.is_chasing:
+            # if the state is chasing
+            elif self.agent.action_state_machine.is_chasing:
                 if self.agent.perception.is_chasing_done():
                     if self.agent.perception.is_found():
-                        self.agent.actionStateMachine.chase()
+                        self.agent.action_state_machine.chase()
                         break
                     else:
-                        self.agent.actionStateMachine.decelerate()
+                        self.agent.action_state_machine.decelerate()
                         break
                 elif self.agent.chase_failed:
-                    self.agent.actionStateMachine.decelerate()
+                    self.agent.action_state_machine.decelerate()
                     break
                 else:
                     if self.agent.not_seeing_target_step_n < AgentConstants.not_seeing_target_step_limit:
-                        self.agent.actionStateMachine.hold()
+                        self.agent.action_state_machine.hold()
                         break
                     else:
-                        self.agent.actionStateMachine.decelerate()
+                        self.agent.action_state_machine.decelerate()
                         break
 
-            # if the agent is decelerating
-            elif self.agent.actionStateMachine.is_decelerating:
+            # if the state is decelerating
+            elif self.agent.action_state_machine.is_decelerating:
                 if self.agent.perception.is_found():
-                    self.agent.actionStateMachine.chase()
+                    self.agent.action_state_machine.chase()
                     break
                 elif self.agent.perception.is_static():
-                    self.agent.actionStateMachine.search()
+                    self.agent.action_state_machine.search()
                     break
                 else:
-                    self.agent.actionStateMachine.hold()
+                    self.agent.action_state_machine.hold()
                     break
 
-            # if the agent is in an unknown state
+            # if the state is in an unknown state (this won't be possible)
             else:
-                warnings.warn("An unknown state: {}".format(self.agent.actionStateMachine.current_state))
-                self.agent.actionStateMachine.reset()
+                warnings.warn("An unknown state: {}".format(self.agent.action_state_machine.current_state))
+                self.agent.action_state_machine.reset()
                 break
 
         self.deadlock_breaker()
 
     def deadlock_breaker(self):
 
-        if self.agent.actionStateMachine.is_chasing:
-
-            # if self.agent.currentAction == AgentConstants.left or self.agent.currentAction == AgentConstants.right \
-            #         or self.agent.currentAction == AgentConstants.taxi:
-            #     self.static_step_n += 1
-            # else:
-            #     self.static_step_n = 0
+        if self.agent.action_state_machine.is_chasing:
 
             if self.agent.perception.is_nearly_static():
-                self.static_step_n += 1
+                self.agent.static_step_n += 1
             else:
-                self.static_step_n = 0
+                self.agent.static_step_n = 0
 
-            if self.static_step_n > AgentConstants.deadlock_step_limit:
+            if self.agent.static_step_n > AgentConstants.deadlock_step_limit:
                 self.agent.exploratory_direction = np.random.choice(AgentConstants.directions_for_deadlock)
-                self.agent.actionStateMachine.rotate_to_direction()
-                self.static_step_n = 0
+                self.agent.action_state_machine.rotate_to_direction()
+                self.agent.static_step_n = 0
         else:
-            self.static_step_n = 0
+            self.agent.static_step_n = 0
 
     def reset(self):
-        self.static_step_n = 0
+        pass

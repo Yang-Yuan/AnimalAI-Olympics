@@ -18,7 +18,7 @@ class Agent(object):
         # functional modules
         self.perception = Perception(self)  # generate high-level perception based on current observation
         self.strategy = Strategy(self)  # implement strategy to chase the food given the high-level perception
-        self.actionStateMachine = ActionStateMachine(self)  # use a finite state machine to help implement the strategy
+        self.action_state_machine = ActionStateMachine(self)  # use a finite state machine to help implement the strategy
         self.chaser = Chaser(self)  # responsible for chase the food
 
         # primitive perception
@@ -32,6 +32,7 @@ class Agent(object):
         self.step_n = None  # the current time step, int
 
         # high-level perceptions
+        # Thought the environment is 3D, all the representation here is in the 2D plane of images.
         self.is_green = None  # bool numpy array of shape (84, 84), to indicate if each pixel is green (food color)
         self.is_brown = None  # bool numpy array of shape (84, 84), to indicate if each pixel is brown (food color)
         self.is_red = None  # bool numpy array of shape (84, 84), to indicate if each pixel is red (danger color)
@@ -62,6 +63,7 @@ class Agent(object):
         self.not_seeing_target_step_n = None  # int, how long the agent has lost the visual of a target
         self.chase_failed = None  # bool, if it failed to reach a target because path planning failed
         self.search_direction = None  # either left or right, to start searching for the target
+        self.static_step_n = None  # int, how long the agent's position hasn't changed
         # TODO self.visual_imagery reconstruct mental imagery from primitive perception
 
     def reset(self, t=250):
@@ -72,7 +74,7 @@ class Agent(object):
         """
 
         # functional modules
-        self.actionStateMachine.reset()
+        self.action_state_machine.reset()
         self.strategy.reset()
         self.perception.reset()
         self.chaser.reset()
@@ -111,11 +113,12 @@ class Agent(object):
 
         # strategy-related variables
         self.pirouette_step_n = 0
-        self.target_color = "brown" # start with the non-terminating food
+        self.target_color = "brown"  # start with the non-terminating food
         self.exploratory_direction = None
         self.not_seeing_target_step_n = None
         self.chase_failed = None
-        self.search_direction = AgentConstants.left # start with the left to search
+        self.search_direction = AgentConstants.left  # start with the left to search
+        self.static_step_n = 0
 
     def step(self, obs, reward, done, info):
         """
