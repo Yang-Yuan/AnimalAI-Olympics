@@ -1,5 +1,6 @@
 import agentUtils
 import numpy as np
+from skimage.color import rgb2hsv
 
 # Task-related constants
 predefined_colors = {"green": [0.506, 0.749, 0.255],
@@ -11,7 +12,7 @@ predefined_colors = {"green": [0.506, 0.749, 0.255],
                      "UL": [0.435, 0.367, 0.2],
                      "yellow": [0.733, 0.651, 0.506],
                      "sky_blue": [0.192, 0.302, 0.475]}
-predefined_colors_h = {k: agentUtils.toHue(np.array(v, ndmin=3))[0, 0] \
+predefined_colors_h = {k: rgb2hsv(np.array(v, ndmin=3))[0, 0] \
                        for (k, v) in predefined_colors.items()}
 
 # Environmental constants
@@ -23,7 +24,7 @@ default_test_length = 1000
 memory_size = 200
 green_tolerance = 0.075
 brown_tolerance = 0.001
-red_tolerance = 0.02
+red_tolerance = [0.01, 0.2, 0.2]
 sky_blue_tolerance = 0.001
 # red_tolerance = 0.03996598639455783
 # orange_tolerance = 0.003284771042431224
@@ -55,6 +56,9 @@ all_false = np.full((resolution, resolution), False)
 # Control constants
 aim_error_limit = 5
 size_limit = 5
+brown_size_limit = 5
+gray_size_limit = 20
+red_size_limit = 5
 hl = 2
 pirouette_step_limit = 60
 deadlock_step_limit = 60

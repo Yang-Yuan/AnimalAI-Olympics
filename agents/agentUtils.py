@@ -57,4 +57,3 @@ def is_color_significant(is_color, significant_size):
         return max(sizes) > significant_size
     else:
         return False
-

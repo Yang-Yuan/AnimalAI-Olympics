@@ -28,35 +28,30 @@ class Perception(object):
         if self.agent.vector_memory.full():
             self.agent.vector_memory.get()
 
-        self.agent.is_green = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "green")) < AgentConstants.green_tolerance
-        # self.agent.is_brown = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-        #     "brown")) < AgentConstants.brown_tolerance
+        self.agent.is_green = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get(
+            "green")[0]) < AgentConstants.green_tolerance
         self.agent.is_brown = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("brown")).max(
             axis=2) < AgentConstants.brown_tolerance
         self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(
-            self.agent.is_brown, AgentConstants.size_limit) else AgentConstants.all_false
-        self.agent.is_red = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "red")) < AgentConstants.red_tolerance
-        self.agent.is_red = self.puff_red(delta=2)
+            self.agent.is_brown, AgentConstants.brown_size_limit) else AgentConstants.all_false
+        self.agent.is_red = (abs(self.agent.obs_visual_hsv - AgentConstants.predefined_colors_h.get("red")) \
+                             < AgentConstants.red_tolerance).all(axis=2)
+        self.agent.is_red = self.agent.is_red if agentUtils.is_color_significant(
+            self.agent.is_red, AgentConstants.red_size_limit) else AgentConstants.all_false
+        self.agent.is_red = self.puff_red(delta=1)
         self.agent.is_gray = np.logical_and((self.agent.obs_visual[:, :, 0] == self.agent.obs_visual[:, :, 1]),
                                             (self.agent.obs_visual[:, :, 1] == self.agent.obs_visual[:, :, 2]))
-        self.agent.is_blue = np.logical_and(np.logical_and(
-                                abs(self.agent.obs_visual[:, :, 0] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[0]) < AgentConstants.sky_blue_tolerance,
-                                abs(self.agent.obs_visual[:, :, 1] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[1]) < AgentConstants.sky_blue_tolerance),
-                                abs(self.agent.obs_visual[:, :, 2] - AgentConstants.predefined_colors.get(
-                                 "sky_blue")[2]) < AgentConstants.sky_blue_tolerance)
-        # self.agent.is_orange = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-        #     "orange")) < AgentConstants.orange_tolerance
-        self.agent.is_yellow = abs(self.agent.obs_visual_h - AgentConstants.predefined_colors_h.get(
-            "yellow")) < AgentConstants.yellow_tolerance
+        self.agent.is_gray = self.agent.is_gray if agentUtils.is_color_significant(
+            self.agent.is_brown, AgentConstants.gray_size_limit) else AgentConstants.all_false
+        self.agent.is_blue = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("sky_blue")).max(
+            axis=2) < AgentConstants.sky_blue_tolerance
+        self.agent.is_yellow = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get(
+            "yellow")[0]) < AgentConstants.yellow_tolerance
         self.synthesize_is_inaccessible()
         self.update_target()
         self.update_nearest_inaccessible_idx()
 
-        self.agent.visual_h_memory.put(self.agent.obs_visual_h)
+        self.agent.visual_h_memory.put(self.agent.obs_visual_hsv)
         self.agent.is_green_memory.put(self.agent.is_green)
         self.agent.is_brown_memory.put(self.agent.is_brown)
         self.agent.is_red_memory.put(self.agent.is_red)
@@ -71,7 +66,7 @@ class Perception(object):
             green_memory = np.array(self.agent.is_green_memory.queue)[-AgentConstants.pirouette_step_limit:]
             if green_memory.any():
                 self.agent.target_color = "green"
-                best_direction = green_memory.sum(axis = (1, 2)).argmax()
+                best_direction = green_memory.sum(axis=(1, 2)).argmax()
                 if 0 <= best_direction < 30:
                     if self.agent.search_direction == AgentConstants.left:
                         self.agent.search_direction = AgentConstants.left
@@ -82,8 +77,11 @@ class Perception(object):
                         self.agent.search_direction = AgentConstants.right
                     else:
                         self.agent.search_direction = AgentConstants.left
+                self.agent.safest_direction = None
+
             else:
                 self.agent.safest_direction = np.random.choice(AgentConstants.pirouette_step_limit)
+                self.agent.target_color = "brown"
                 # is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
                 # if is_yellow.any():
                 #     self.agent.safest_direction = np.argmax(
@@ -146,7 +144,8 @@ class Perception(object):
         # TODO maybe add the walls here, but...
         self.agent.is_inaccessible = np.logical_or(self.agent.is_gray, self.agent.is_red)
         self.agent.is_inaccessible = np.logical_or(self.agent.is_inaccessible, self.agent.is_blue)
-        self.agent.is_inaccessible_masked = np.logical_and(self.agent.is_inaccessible, np.logical_not(AgentConstants.frame_mask))
+        self.agent.is_inaccessible_masked = np.logical_and(self.agent.is_inaccessible,
+                                                           np.logical_not(AgentConstants.frame_mask))
 
     def find_reachable_target(self, is_color):
         if is_color.any():
@@ -192,14 +191,26 @@ class Perception(object):
 
     def puff_red(self, delta):
         new_is_red = self.agent.is_red.copy()
-        for delt in np.arange(1, delta + 1):
-            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (-delt, 0), cval=False))
-            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (delt, 0), cval=False))
-            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, -delt), cval=False))
-            new_is_red = np.logical_or(new_is_red, shift(self.agent.is_red, (0, delt), cval=False))
+        shifted_up = self.agent.is_red.copy()
+        shifted_down = self.agent.is_red.copy()
+        shifted_left = self.agent.is_red.copy()
+        shifted_right = self.agent.is_red.copy()
+        for _ in np.arange(delta):
+            shifted_up = np.roll(shifted_up, (-1, 0), (0, 1))
+            shifted_up[-1, :] = False
+            new_is_red = np.logical_or(new_is_red, shifted_up)
+            shifted_down = np.roll(shifted_down, (1, 0), (0, 1))
+            shifted_down[0, :] = False
+            new_is_red = np.logical_or(new_is_red, shifted_down)
+            shifted_left = np.roll(shifted_left, (0, -1), (0, 1))
+            shifted_left[:, -1] = False
+            new_is_red = np.logical_or(new_is_red, shifted_left)
+            shifted_right = np.roll(shifted_right, (0, 1), (0, 1))
+            shifted_right[:, 0] = False
+            new_is_red = np.logical_or(new_is_red, shifted_right)
         new_is_red = np.logical_and(np.logical_and(new_is_red,
                                                    np.logical_not(self.agent.is_green)),
-                                                   np.logical_not(self.agent.is_brown))
+                                    np.logical_not(self.agent.is_brown))
         return new_is_red
 
     def reset(self):

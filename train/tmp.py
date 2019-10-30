@@ -82,3 +82,6 @@ z = ([1, 2, 3], [4, 5, 6])
 for ii, jj in zip(*z):
   print(ii + jj)
 
+for ii in (1, 2, 3):
+  print(ii)
+

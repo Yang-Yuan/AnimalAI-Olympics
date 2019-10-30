@@ -5,6 +5,7 @@ from perception import Perception
 from chaser import Chaser
 import AgentConstants
 import queue
+from skimage.color import rgb2hsv
 
 
 class Agent(object):
@@ -27,7 +28,7 @@ class Agent(object):
         # primitive perception
         self.obs_visual = None
         self.obs_vector = None
-        self.obs_visual_h = None
+        self.obs_visual_hsv = None
         self.done = None
         self.reward = None
         self.info = None
@@ -86,7 +87,7 @@ class Agent(object):
         # primitive perception
         self.obs_visual = None
         self.obs_vector = None
-        self.obs_visual_h = None
+        self.obs_visual_hsv = None
         self.done = None
         self.reward = None
         self.info = None
@@ -143,7 +144,7 @@ class Agent(object):
 
         # set primitive observations
         self.obs_visual, self.obs_vector = obs
-        self.obs_visual_h = agentUtils.toHue(self.obs_visual)
+        self.obs_visual_hsv = rgb2hsv(self.obs_visual)
         self.done = done
         self.reward = reward
         self.info = info

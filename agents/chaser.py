@@ -63,27 +63,29 @@ class Chaser(object):
 
     def generate_action(self, path, target_idx, target_size):
 
-        min_col = None
-        for jj in np.arange(AgentConstants.resolution):
-            if not self.agent.is_inaccessible[83, jj]:
-                min_col = jj
-                break
-        if min_col is None:
-            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
-            self.agent.chase_failed = True
-            return
-
-        max_col = None
-        for jj in np.arange(AgentConstants.resolution)[::-1]:
-            if not self.agent.is_inaccessible[83, jj]:
-                max_col = jj
-                break
-        if max_col is None:
-            warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            self.agent.currentAction = AgentConstants.taxi
-            self.agent.chase_failed = True
-            return
+        min_col = 0
+        max_col = 83
+        # min_col = None
+        # for jj in np.arange(AgentConstants.resolution):
+        #     if not self.agent.is_inaccessible[83, jj]:
+        #         min_col = jj
+        #         break
+        # if min_col is None:
+        #     warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #     self.agent.currentAction = AgentConstants.taxi
+        #     self.agent.chase_failed = True
+        #     return
+        #
+        # max_col = None
+        # for jj in np.arange(AgentConstants.resolution)[::-1]:
+        #     if not self.agent.is_inaccessible[83, jj]:
+        #         max_col = jj
+        #         break
+        # if max_col is None:
+        #     warnings.warn("Might have been standing on dangerous area!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        #     self.agent.currentAction = AgentConstants.taxi
+        #     self.agent.chase_failed = True
+        #     return
 
         start = path[0]
         end = path[1]
@@ -124,7 +126,12 @@ class Chaser(object):
             else:
                 return AgentConstants.right
         else:
-            return AgentConstants.forward
+            if self.agent.obs_vector[0, 0] < -0.5:
+                return AgentConstants.forward_right
+            elif self.agent.obs_vector[0, 0] > 0.5:
+                return AgentConstants.forward_left
+            else:
+                return AgentConstants.forward
 
     def imagine_target(self):
 
@@ -152,7 +159,7 @@ class Chaser(object):
         for ii in np.arange(AgentConstants.resolution):
             for jj in np.arange(AgentConstants.resolution):
                 if matrix[ii, jj] == 1:
-                    matrix[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis=1).min()
+                    matrix[ii, jj] = 1 + abs(path_idx - [ii, jj]).sum(axis=1).min() / 2
 
         return matrix
 
