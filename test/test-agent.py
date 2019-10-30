@@ -1,53 +1,41 @@
 from animalai.envs.environment import UnityEnvironment
 from animalai.envs.arena_config import ArenaConfig
-import logging
 import random
 import numpy as np
 from matplotlib import pyplot as plt
-import re
-import queue
-from pynput import keyboard
-import utils
-import os
-import uuid
-import constants
-import time
-from skimage import segmentation, color
-from scipy.stats import binned_statistic
+
+# import my handcrafted agent
+from handcraftedAgent import Agent
 import AgentConstants
 
-from handcraftedAgent import Agent
+# config files to test my handcrafted agent
+arenaConfigs = ['../configs/234-POA/poa-1.yaml',
+                '../configs/234-POA/poa-2.yaml',
+                '../configs/234-POA/poa-3.yaml',
+                '../configs/1-Food/single-static.yaml',
+                '../configs/1-Food/two-static.yaml',
+                '../configs/1-Food/three-static.yaml',
+                '../configs/1-Food/multi-static.yaml',
+                '../configs/1-Food/single-dynamic.yaml',
+                '../configs/1-Food/two-dynamic.yaml',
+                '../configs/1-Food/three-dynamic.yaml',
+                '../configs/1-Food/multi-dynamic.yaml',
+                '../configs/1-Food/single-mix.yaml',
+                '../configs/1-Food/two-mix.yaml',
+                '../configs/1-Food/three-mix.yaml',
+                '../configs/1-Food/multi-mix.yaml',
+                '../examples/configs/1-Food.yaml',
+                '../examples/configs/2-Preferences.yaml',
+                '../examples/configs/3-Obstacles.yaml',
+                '../examples/configs/4-Avoidance.yaml',
+                '../examples/configs/5-SpatialReasoning.yaml',
+                '../examples/configs/6-Generalization.yaml',
+                '../examples/configs/7-InternalMemory.yaml']
 
-# arenaConfigs = [#'../examples/configs/1-Food.yaml',
-#                 '../examples/configs/2-Preferences.yaml']
-                # '../examples/configs/3-Obstacles.yaml',
-                # '../examples/configs/4-Avoidance.yaml',
-                # '../examples/configs/5-SpatialReasoning.yaml',
-                # '../examples/configs/6-Generalization.yaml',
-                # '../examples/configs/7-InternalMemory.yaml']
-
-# arenaConfigs = ['../configs/1-Food/single-static.yaml',
-#                 '../configs/1-Food/two-static.yaml',
-#                 '../configs/1-Food/three-static.yaml',
-#                 '../configs/1-Food/multi-static.yaml',
-#                 '../configs/1-Food/single-dynamic.yaml',
-#                 '../configs/1-Food/two-dynamic.yaml',
-#                 '../configs/1-Food/three-dynamic.yaml',
-#                 '../configs/1-Food/multi-dynamic.yaml',
-#                 '../configs/1-Food/single-mix.yaml',
-#                 '../configs/1-Food/two-mix.yaml',
-#                 '../configs/1-Food/three-mix.yaml',
-#                 '../configs/1-Food/multi-mix.yaml']
-
-arenaConfigs = [#'../configs/234-POA/poa-1.yaml',
-                #'../configs/234-POA/poa-2.yaml',
-                '../configs/234-POA/poa-3.yaml']
-
+# parameters for setting up the testing env
 env_path = '../env/AnimalAI'
 worker_id = random.randint(1, 100)
-
 seed = 333
-np.random.seed(333)
 base_port = 5005
 sub_id = 1
 run_id = 'train_example'
@@ -55,10 +43,13 @@ run_seed = 1
 docker_target_name = None
 no_graphics = False
 n_arenas = 1
-resolution = constants.resolution
-n_channels = constants.n_channels
-dim_actions = constants.dim_actions
+resolution = 84
+n_channels = 3
+dim_actions = 2
+sample_size_per_task = 30
 
+# set up the testing env
+np.random.seed(seed)
 if env_path is not None:
     env_path = (env_path.strip()
                 .replace('.app', '')
@@ -77,33 +68,42 @@ env = UnityEnvironment(
     resolution=resolution
 )
 
+# The Agent to test
 agent = Agent()
 
+# visualization
 plt.ion()
 fig, ax = plt.subplots(ncols=1, nrows=1)
-image = ax.imshow(np.zeros((resolution, resolution, 3)))
-line, = ax.plot([], [])
-sca = ax.scatter([], [], s = 5, c="yellow")
+image = ax.imshow(np.zeros((resolution, resolution, 3))) # visual input for the agent
+line, = ax.plot([], []) # the direction that the agent want to go given the visual input
+sca = ax.scatter([], [], s = 5, c="yellow") # the path to the target(food)
 
 
+# loop over all the config files above
 for arenaConfig in arenaConfigs:
     print(arenaConfig)
     arena_config_in = ArenaConfig(arenaConfig)
-    for sample_n in range(constants.sample_size_per_task):
+
+    # run multiple tests derived from each config file
+    for sample_n in range(sample_size_per_task):
         print("ArenaConfig; {} Sample: {}".format(arenaConfig, sample_n))
+
+        # initialize(reset) the agent and the env
         agent.reset(arena_config_in.arenas[0].t)
         brainInfo = env.reset(arenas_configurations=arena_config_in)
 
         while True:
 
-            obs = brainInfo['Learner'].visual_observations[0][0, :, :, :], brainInfo['Learner'].vector_observations
+            # information given by the env
+            obs = brainInfo['Learner'].visual_observations[0][0, :, :, :], brainInfo['Learner'].vector_observations[0]
             reward = brainInfo['Learner'].rewards[0]
             done = brainInfo['Learner'].local_done[0]
             info = {"brain_info": brainInfo}
 
+            # let the agent generate an action based on the information
             action = agent.step(obs, reward, done, info)
 
-            # Visualization
+            # Visualization{visual, direction, path}
             image.set_data(obs[0])
             if agent.chaser.newest_path is not None:
                 sca.set_offsets(np.array(agent.chaser.newest_path))
@@ -118,10 +118,12 @@ for arenaConfig in arenaConfigs:
             fig.canvas.draw()
             fig.canvas.flush_events()
 
+            # go to next test if the current one is finised
             if all(brainInfo['Learner'].local_done):
                 break
             else:
                 brainInfo = env.step(action)
 
+# cleanup
 plt.close(fig)
 env.close()

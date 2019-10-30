@@ -126,12 +126,12 @@ class Chaser(object):
             else:
                 return AgentConstants.right
         else:
-            if self.agent.obs_vector[0, 0] < -0.5:
+            if self.agent.obs_vector[0] < -0.5:
                 return AgentConstants.forward_right
-            elif self.agent.obs_vector[0, 0] > 0.5:
+            elif self.agent.obs_vector[0] > 0.5:
                 return AgentConstants.forward_left
             else:
-                if self.agent.obs_vector[0, 2] > 10:
+                if self.agent.obs_vector[2] > 10:
                     return AgentConstants.taxi
                 else:
                     return AgentConstants.forward
