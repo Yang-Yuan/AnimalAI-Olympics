@@ -131,10 +131,18 @@ class Perception(object):
         return self.agent.reward is not None and self.agent.reward > 0
 
     def synthesize_is_inaccessible(self):
-        # TODO maybe add the more inaccessible things here, but...
+        '''
+        This method set the inaccessible area in the current visual observation.
+        :return:
+        '''
+        # currently, the inaccessible area is the union of gray, red and blue ares.
         self.agent.is_inaccessible = np.logical_or(np.logical_or(self.agent.is_gray,
                                                                  self.agent.is_red),
                                                                  self.agent.is_blue)
+        # TODO maybe add the more inaccessible things here, but...
+        # mask the inaccessible area with a frame so that all the pixels on the four
+        # sides is accessible. This is for path planning if there is no path based only
+        # only the current visual input, and can cause the agent to bypass the obstacles.
         self.agent.is_inaccessible_masked = np.logical_and(self.agent.is_inaccessible,
                                                            np.logical_not(AgentConstants.frame_mask))
 
@@ -159,21 +167,36 @@ class Perception(object):
             return None, None
 
     def update_target(self):
-
+        '''
+        This method updates the color, position in 2D and size of the target.
+        :return:
+        '''
+        # if there is a brown chunk in view, set it as the target, calculate its position and size,
+        # then go after it.
         if self.agent.is_brown.any():
             self.agent.target_color = "brown"
             self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
                 self.agent.is_brown)
             return
+        # if the target has already been set to green (after observing the surrounding)
+        # and there is a green chunk, go after it.
         elif self.agent.target_color == "green" and self.agent.is_green.any():
             self.agent.reachable_target_idx, self.agent.reachable_target_size = self.find_reachable_target(
                 self.agent.is_green)
             return
+        # if nothing at all, reset the target.
         else:
             self.agent.reachable_target_idx = None
             self.agent.reachable_target_size = None
 
     def update_nearest_inaccessible_idx(self):
+        '''
+        This method calculates the closest inaccessible pixel on the agent's way forward.
+        The agent's way forward in the 2D place is defined by a mask numpy
+        array, which is True everywhere between the bottom side to the vanishing
+        point. This is for the agent to not hit inaccessible areas.
+        :return:
+        '''
         idx = np.argwhere(np.logical_and(AgentConstants.road_mask, self.agent.is_red))
         if 0 == len(idx):
             self.agent.nearest_inaccessible_idx = None
@@ -181,6 +204,11 @@ class Perception(object):
             self.agent.nearest_inaccessible_idx = idx[idx[:, 0].argmax()]
 
     def puff_red(self, delta):
+        '''
+        This method enlarges the red area so that the agent will kill itself easily.
+        :param delta:
+        :return:
+        '''
         new_is_red = self.agent.is_red.copy()
         shifted_up = self.agent.is_red.copy()
         shifted_down = self.agent.is_red.copy()
