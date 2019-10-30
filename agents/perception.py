@@ -10,48 +10,50 @@ class Perception(object):
         self.agent = agent
 
     def perceive(self):
+        '''
+        This method will recognize colors, update targets and save memory.
+        :return:
+        '''
 
-        if self.agent.visual_hsv_memory.full():
-            self.agent.visual_hsv_memory.get()
+        # we limit the size of memory, so before saving new observations,
+        # delete the old ones if the memory is full
         if self.agent.is_green_memory.full():
             self.agent.is_green_memory.get()
         if self.agent.is_brown_memory.full():
             self.agent.is_brown_memory.get()
         if self.agent.is_red_memory.full():
             self.agent.is_red_memory.get()
-        if self.agent.is_yellow_memory.full():
-            self.agent.is_yellow_memory.get()
         if self.agent.vector_memory.full():
             self.agent.vector_memory.get()
 
-        self.agent.is_green = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get(
-            "green")[0]) < AgentConstants.green_tolerance
-        self.agent.is_brown = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("brown")).max(
-            axis=2) < AgentConstants.brown_tolerance
-        self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(
-            self.agent.is_brown, AgentConstants.brown_size_limit) else AgentConstants.all_false
-        self.agent.is_red = (abs(self.agent.obs_visual_hsv - AgentConstants.predefined_colors_h.get("red")) \
-                             < AgentConstants.red_tolerance).all(axis=2)
-        self.agent.is_red = self.agent.is_red if agentUtils.is_color_significant(
-            self.agent.is_red, AgentConstants.red_size_limit) else AgentConstants.all_false
+        # label each pixel to see if they are green(food), brown(also food) , red(danger), gray(walls) or blue(sky).
+        self.agent.is_green = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get("green")[0]) < AgentConstants.green_tolerance
+        self.agent.is_brown = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("brown")).max(axis=2) < AgentConstants.brown_tolerance
+        self.agent.is_red = (abs(self.agent.obs_visual_hsv - AgentConstants.predefined_colors_h.get("red")) < AgentConstants.red_tolerance).all(axis=2)
+        self.agent.is_gray = np.logical_and(abs(self.agent.obs_visual[:, :, 0] - self.agent.obs_visual[:, :, 1]) < 0.001, abs(self.agent.obs_visual[:, :, 1] - self.agent.obs_visual[:, :, 2]) < 0.001)
+        self.agent.is_blue = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("sky_blue")).max(axis=2) < AgentConstants.sky_blue_tolerance
+
+        # filter out some noisy pixel labels
+        self.agent.is_brown = self.agent.is_brown if agentUtils.is_color_significant(self.agent.is_brown, AgentConstants.brown_size_limit) else AgentConstants.all_false
+        self.agent.is_red = self.agent.is_red if agentUtils.is_color_significant(self.agent.is_red, AgentConstants.red_size_limit) else AgentConstants.all_false
+        self.agent.is_gray = self.agent.is_gray if agentUtils.is_color_significant(self.agent.is_gray, AgentConstants.gray_size_limit) else AgentConstants.all_false
+
+        # enlarge the area of dangerous color so that the agent is less likely to kill itself.
         self.agent.is_red = self.puff_red(delta=3)
-        self.agent.is_gray = np.logical_and(abs(self.agent.obs_visual[:, :, 0] - self.agent.obs_visual[:, :, 1]) < 0.001,
-                                            abs(self.agent.obs_visual[:, :, 1] - self.agent.obs_visual[:, :, 2]) < 0.001)
-        self.agent.is_gray = self.agent.is_gray if agentUtils.is_color_significant(
-            self.agent.is_gray, AgentConstants.gray_size_limit) else AgentConstants.all_false
-        self.agent.is_blue = abs(self.agent.obs_visual - AgentConstants.predefined_colors.get("sky_blue")).max(
-            axis=2) < AgentConstants.sky_blue_tolerance
-        self.agent.is_yellow = abs(self.agent.obs_visual_hsv[:, :, 0] - AgentConstants.predefined_colors_h.get(
-            "yellow")[0]) < AgentConstants.yellow_tolerance
+
+        # merge red, blue and gray to generate the inaccessible area for path planning later.
         self.synthesize_is_inaccessible()
+
+        # if food exists, update this position and size of it for path planning
         self.update_target()
+
+        # update the closest inaccessible pixel for the safety of exploration.
         self.update_nearest_inaccessible_idx()
 
-        self.agent.visual_hsv_memory.put(self.agent.obs_visual_hsv)
+        # save memory
         self.agent.is_green_memory.put(self.agent.is_green)
         self.agent.is_brown_memory.put(self.agent.is_brown)
         self.agent.is_red_memory.put(self.agent.is_red)
-        self.agent.is_yellow_memory.put(self.agent.is_yellow)
         self.agent.vector_memory.put(self.agent.obs_vector[0])
 
     def renew_target_from_panorama(self):
@@ -77,13 +79,6 @@ class Perception(object):
             else:
                 self.agent.exploratory_direction = np.random.choice(AgentConstants.pirouette_step_limit)
                 self.agent.target_color = "brown"
-                # is_yellow = np.array(self.agent.is_yellow_memory.queue)[-AgentConstants.pirouette_step_limit:]
-                # if is_yellow.any():
-                #     self.agent.safest_direction = np.argmax(
-                #         [np.logical_and(frame, AgentConstants.road_mask).sum() for frame in is_yellow])
-                # else:
-                #     warnings.warn("Nowhere to go, just move forward")
-                #     self.agent.safest_direction = 0
 
     def renew_target(self):
 
@@ -136,9 +131,10 @@ class Perception(object):
         return self.agent.reward is not None and self.agent.reward > 0
 
     def synthesize_is_inaccessible(self):
-        # TODO maybe add the walls here, but...
-        self.agent.is_inaccessible = np.logical_or(self.agent.is_gray, self.agent.is_red)
-        self.agent.is_inaccessible = np.logical_or(self.agent.is_inaccessible, self.agent.is_blue)
+        # TODO maybe add the more inaccessible things here, but...
+        self.agent.is_inaccessible = np.logical_or(np.logical_or(self.agent.is_gray,
+                                                                 self.agent.is_red),
+                                                                 self.agent.is_blue)
         self.agent.is_inaccessible_masked = np.logical_and(self.agent.is_inaccessible,
                                                            np.logical_not(AgentConstants.frame_mask))
 

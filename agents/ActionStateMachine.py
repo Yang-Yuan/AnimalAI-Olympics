@@ -91,18 +91,18 @@ class ActionStateMachine(StateMachine):
     # ************************** callbacks for rotate_to_direction ***************************
     def on_rotate_to_direction(self):
         # print("on_rotate_to_direction~~~~~~~~~~~~~~~~~~~~~~")
-        if AgentConstants.pirouette_step_limit / 2 <= self.agent.safest_direction \
+        if AgentConstants.pirouette_step_limit / 2 <= self.agent.exploratory_direction \
                 < AgentConstants.pirouette_step_limit:
-            self.agent.safest_direction -= 60
+            self.agent.exploratory_direction -= 60
 
     def on_enter_rotating_to_direction(self):
         # print("on_enter_rotating_to_direction~~~~~~~~~~~~~~~~~")
-        if self.agent.safest_direction > 0:
+        if self.agent.exploratory_direction > 0:
             self.agent.current_action = AgentConstants.left
-            self.agent.safest_direction -= 1
+            self.agent.exploratory_direction -= 1
         else:
             self.agent.current_action = AgentConstants.right
-            self.agent.safest_direction += 1
+            self.agent.exploratory_direction += 1
 
     # ************************** callbacks for rotate_to_direction end***************************
 

@@ -35,7 +35,6 @@ class Agent(object):
         self.is_green = None  # bool numpy array of shape (84, 84), to indicate if each pixel is green (food color)
         self.is_brown = None  # bool numpy array of shape (84, 84), to indicate if each pixel is brown (food color)
         self.is_red = None  # bool numpy array of shape (84, 84), to indicate if each pixel is red (danger color)
-        self.is_yellow = None  # bool numpy array of shape (84, 84), to indicate if each pixel is yellow (ground color)
         self.is_blue = None  # bool numpy array of shape (84, 84), to indicate if each pixel is blue (sky color)
         self.is_gray = None  # bool numpy array of shape (84, 84), to indicate if each pixel is gray (wall color)
         self.target_color = None  # the color is currently looking for, either brown or green
@@ -48,11 +47,9 @@ class Agent(object):
         self.nearest_inaccessible_idx = None  # int numpy array of (2,), to indicate the nearest inaccessible pixel
 
         # memory use queues as memory to save the previous observation
-        self.visual_hsv_memory = queue.Queue(maxsize=AgentConstants.memory_size)
         self.is_green_memory = queue.Queue(maxsize=AgentConstants.memory_size)
         self.is_brown_memory = queue.Queue(maxsize=AgentConstants.memory_size)
         self.is_red_memory = queue.Queue(maxsize=AgentConstants.memory_size)
-        self.is_yellow_memory = queue.Queue(maxsize=AgentConstants.memory_size)
         self.vector_memory = queue.Queue(maxsize=AgentConstants.memory_size)
 
         # the action that will be returned to the env
@@ -94,7 +91,6 @@ class Agent(object):
         self.is_green = None
         self.is_brown = None
         self.is_red = None
-        self.is_yellow = None
         self.is_blue = None
         self.is_gray = None
         self.target_color = None
@@ -105,11 +101,9 @@ class Agent(object):
         self.nearest_inaccessible_idx = None
 
         # memory
-        self.visual_hsv_memory.queue.clear()
         self.is_green_memory.queue.clear()
         self.is_brown_memory.queue.clear()
         self.is_red_memory.queue.clear()
-        self.is_yellow_memory.queue.clear()
         self.vector_memory.queue.clear()
 
         # output action
@@ -152,4 +146,5 @@ class Agent(object):
         # set action by running strategy
         self.strategy.run_strategy()
 
+        # return the action
         return self.current_action
