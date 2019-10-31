@@ -1,4 +1,3 @@
-import agentUtils
 import numpy as np
 from skimage.color import rgb2hsv
 
@@ -20,25 +19,12 @@ resolution = 84
 center_of_view = [resolution / 2, resolution / 2]
 default_test_length = 1000
 
-# Perception limits of colors
+# Perception constants
 memory_size = 200
 green_tolerance = 0.075
 brown_tolerance = 0.001
 red_tolerance = [0.01, 0.2, 0.2]
 sky_blue_tolerance = 0.001
-# red_tolerance = 0.03996598639455783
-# orange_tolerance = 0.003284771042431224
-# box_dark_tolerance = 0.002362055933484493
-# box_light_tolerance = 0.002362055933484493
-# UL_tolerance = 0.002229215708910319
-yellow_tolerance = 0.01
-
-# road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
-# for delta, ii in zip(np.repeat(np.arange(resolution / 4), 2),
-#                      np.arange(start = resolution - 1, stop = (resolution - 1) / 2, step = -1, dtype = int)):
-#     for jj in np.arange(start = 0 + delta, stop = resolution - delta, dtype = int):
-#         road_mask[ii, jj] = True
-
 road_mask = np.full(shape = (resolution, resolution), fill_value = False, dtype = bool)
 for delta, ii in zip(np.repeat(np.arange(resolution / 2, dtype = int)[::-1], 2),
                      np.arange(start = 0, stop = resolution, step = 1, dtype = int)):
