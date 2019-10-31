@@ -13,10 +13,9 @@ class Chaser(object):
         self.agent = agent
         self.newest_target_idx = None
         self.newest_target_size = None
-        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
         self.newest_path = None
         self.newest_end = None
-        # self.finder = DijkstraFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
 
     def chase(self):
 
