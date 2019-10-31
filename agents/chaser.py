@@ -11,23 +11,35 @@ class Chaser(object):
 
     def __init__(self, agent):
         self.agent = agent
-        self.newest_target_idx = None
-        self.newest_target_size = None
-        self.newest_path = None
-        self.newest_end = None
-        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)
+        self.newest_target_idx = None  # the most recent position of the target
+        self.newest_target_size = None  # the most recent size of the target
+        self.newest_path = None  # the most recent path to the target
+        self.newest_end = None  # the most recent position on the path that can be reached by moving straight (not blocked by obstacles and death zones)
+        self.finder = AStarFinder(diagonal_movement=DiagonalMovement.only_when_no_obstacle)  # using A-star to find the path
 
     def chase(self):
-
+        '''
+        This method is for chasing if the target is in view (so the agent knows its position and size)
+        :return:
+        '''
         self.newest_target_idx = self.agent.reachable_target_idx
         self.newest_target_size = self.agent.reachable_target_size
 
         self.chase_internal(self.newest_target_idx, self.newest_target_size)
 
     def chase_in_dark(self):
+        '''
+        This method is for chasing if the target is not in view, but was in view several step ago.
+        When chasing a target, the target will not always be in view. Even though it is not in view,
+        it should still be there not far from the agent. So, we use the most recent position of the target
+        to keep chasing it, hoping that it will appear again.
+        :return:
+        '''
 
+        # generate a imaginary target
         imaginary_target_idx, imaginary_target_size = self.imagine_target()
 
+        # this logical branch (for debug purpose) is not possible
         if imaginary_target_idx is None:
             warnings.warn("Can't imagine a target to chase!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             self.agent.current_action = AgentConstants.taxi
@@ -37,15 +49,29 @@ class Chaser(object):
         self.chase_internal(imaginary_target_idx, imaginary_target_size)
 
     def chase_internal(self, target_idx, target_size):
-        matrix = np.logical_not(self.agent.is_inaccessible_masked).astype(np.float)
-        if self.newest_path is not None:
-            matrix = self.calculate_path_consistent_matrix(matrix)
+        '''
+        Given target_idx and target_size, this method set Agent.current_action
+        :param target_idx:
+        :param target_size:
+        :return:
+        '''
 
-        grid = Grid(matrix=matrix)
+        # the path planning is based on the map derived from Agent.is_inaccessible_masked,
+        # because the path should consist of only accessible pixels.
+        map_matrix = np.logical_not(self.agent.is_inaccessible_masked).astype(np.float)
+        # Moreover, the map should be skewed by (similar to) the most recent path to this target.
+        # Otherwise, it is possible that the agent might get stuck by infinitely switching
+        # between two very different paths without making any progress.
+        if self.newest_path is not None:
+            map_matrix = self.calculate_path_consistent_matrix(map_matrix)
+
+        # find the path to the target
+        grid = Grid(matrix=map_matrix)
         start = grid.node(AgentConstants.standpoint[1], AgentConstants.standpoint[0])  # it accept xy coords.
         end = grid.node(target_idx[1], target_idx[0])  # it accept xy coords.
         path, _ = self.finder.find_path(start, end, grid)
 
+        # if cannot find a path, then declare the failure of chasing and set an empty action
         if path is None or len(path) <= 1:
             warnings.warn("Can't find a path to the target!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             self.agent.current_action = AgentConstants.taxi
@@ -136,10 +162,11 @@ class Chaser(object):
                     return AgentConstants.forward
 
     def imagine_target(self):
-
-        # target_idx = AgentConstants.frame_idx[
-        #     np.argmin(abs(AgentConstants.frame_idx - self.newest_target_idx).sum(axis=1))]
-
+        '''
+        This method will find the accessible pixel in the current visual input that is closest to the most recent
+        target position in the 2D plance.
+        :return:
+        '''
         distance = abs(AgentConstants.idx0_grid - np.full((AgentConstants.resolution, AgentConstants.resolution),
                                                           self.newest_target_idx[0])) + \
                    abs(AgentConstants.idx1_grid - np.full((AgentConstants.resolution, AgentConstants.resolution),
@@ -151,6 +178,8 @@ class Chaser(object):
             if not self.agent.is_inaccessible[ii, jj]:
                 target_idx = np.array([ii, jj])
                 break
+
+        # Since we don't know how large the imaginary target is, simply set its size to one.
         target_size = 1
 
         return target_idx, target_size
