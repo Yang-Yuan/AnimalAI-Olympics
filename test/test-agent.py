@@ -12,6 +12,7 @@ import AgentConstants
 arenaConfigs = [#'../configs/234-POA/poa-1.yaml',
                 #'../configs/234-POA/poa-2.yaml',
                 '../configs/234-POA/poa-3.yaml',
+                '../configs/234-POA/poa-4.yaml',
                 '../configs/1-Food/single-static.yaml',
                 '../configs/1-Food/two-static.yaml',
                 '../configs/1-Food/three-static.yaml',
